@@ -1,0 +1,7 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+email-validator
+python-dotenv
+cryptography
+requests

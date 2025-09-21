@@ -1,0 +1,13 @@
+FLASK_APP=run.py
+FLASK_ENV=development
+FLASK_RUN_PORT=8080
+FLASK_DEBUG=true
+
+BOT_EMAIL=hermesbot@gmail.com
+BOT_PASSWORD=bot_app_passwd
+BOT_SMTP_SERVER=smtp.gmail.com
+BOT_SMTP_PORT=587
+
+# Use the scripts/generate_keys.py to generate this keys.
+API_STATIC_KEY=f1439347d2134c8chd378247abe1053981 # this key is for trusted apps
+FERNET_KEY=VgHfldtfhLLT1ygToqJ4onmBvZomw2eqlGPQFpCfETU=

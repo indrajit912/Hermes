@@ -1,9 +1,10 @@
 import uuid
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, current_app
 from app.extensions import db
 from app.models import User, EmailBot
 from app.utils.auth import get_current_user
 from app.api.email_api import require_api_key
+from app.utils.email_message import EmailMessage
 
 user_bp = Blueprint("user_api", __name__, url_prefix="/api/v1")
 
@@ -68,7 +69,35 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    # TODO: Send email to the admin for approval
+    # Send email to the admin for approval
+    # get all approved admins
+    admin_emails = [
+        admin.email for admin in User.query.filter_by(is_admin=True).all()
+    ]
+
+    if admin_emails:
+        subject = "Hermes - New User Registration Pending Approval"
+        context = {
+            "name": user.name,
+            "email": user.email,
+            "user_id": user.id
+        }
+
+        html_body = render_template("new_user_notification.html", **context)
+
+        msg = EmailMessage(
+            sender_email_id=current_app.config.get('BOT_EMAIL'),
+            to=admin_emails,
+            subject=subject,
+            email_html_text=html_body,
+            formataddr_text="Hermes Bot"
+        )
+
+        msg.send(
+            sender_email_password=current_app.config.get('BOT_PASSWORD'),
+            server_info=(current_app.config.get("BOT_MAIL_SERVER"), current_app.config.get("BOT_MAIL_PORT")),
+            print_success_status=False
+        )
 
     return jsonify({
         "success": True,

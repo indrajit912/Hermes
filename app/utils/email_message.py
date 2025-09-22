@@ -172,8 +172,6 @@ class EmailMessage(MIMEMultipart):
         server.quit()
 
 
-
-
 def main():
     print('A class for Email Message!\nAuthor: Indrajit Ghosh\n')
 

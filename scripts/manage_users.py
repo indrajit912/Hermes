@@ -75,7 +75,7 @@ def create_user(name, email, admin):
 @click.argument("email")
 def approve_user(email):
     """Approve a user and store their API key as encrypted"""
-    from app.utils.mailer import send_email_with_template
+    from app.utils.mailer import send_email
 
     with app.app_context():
         user = User.query.filter_by(email=email).first()
@@ -101,13 +101,15 @@ def approve_user(email):
         click.echo(f"   API Key (give to user): {api_key}")
 
         # Email using Jinja template
-        subject = "Hermes API Access Approved ✅"
-        context = {"name": user.name, "api_key": api_key}
-        success = send_email_with_template(
-            to_email=user.email,
-            subject=subject,
-            template_name="approval.html",
-            context=context
+        success = send_email(
+            to=user.email,
+            subject="Hermes API Access Approved ✅",
+            html_template="approval.html",
+            template_context={
+                "name": user.name, 
+                "api_key": user.api_key, 
+                "homepage_url": "hermes.com"
+            }
         )
         if success:
             click.echo("📧 Approval email sent successfully.")

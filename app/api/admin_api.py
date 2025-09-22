@@ -2,32 +2,37 @@ from flask import Blueprint, jsonify
 from app.models import User
 from app.extensions import db
 from app.utils.auth import admin_only
+from app.utils.mailer import send_email
 
 admin_bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
 
 @admin_bp.route("/approve-user/<user_id>", methods=["POST"])
 @admin_only
-def approve_api_key(user_id):
+def approve_user(user_id):
     """
-    Approve a pending user's API key (admin-only).
+    Approve a pending user (admin-only).
 
-    Endpoint: POST /api/v1/admin/approve-user/<user_id>
-
-    Description:
-    ------------
-    Admins can approve a user’s API key using this endpoint. Once approved,
-    the API key will be encrypted automatically by the User model and returned
-    in plaintext **only once**.
+    Endpoint:
+    ---------
+    POST /api/v1/admin/approve-user/<user_id>
 
     Headers:
     --------
-    - X-API-KEY: <Admin user's personal API key> OR
+    - Authorization: Bearer <Admin user's personal API key>
+      OR
     - X-STATIC-KEY: <Hermes static API key>
+
+    Description:
+    ------------
+    Admins can approve a new user’s account and assign a new API key using this endpoint. 
+    Once approved, the API key will be encrypted automatically by the User model and returned
+    in plaintext **only once**. After this response, the plaintext key will not
+    be retrievable again.
 
     URL Parameters:
     ---------------
-    - user_id: ID of the user to approve
+    - user_id: ID of the user to approve.
 
     Response (Success):
     -------------------
@@ -35,7 +40,7 @@ def approve_api_key(user_id):
     {
         "success": True,
         "user_id": "<user_id>",
-        "api_key": "<decrypted API key for one-time use>"
+        "api_key": "<plaintext API key for one-time use>"
     }
 
     Response (Errors):
@@ -44,21 +49,31 @@ def approve_api_key(user_id):
     {
         "error": "User not found"
     }
-    OR
+
     Status Code: 200
     {
         "message": "User already approved"
     }
-    OR
+
     Status Code: 400
     {
         "error": "No pending API key found for this user"
     }
-    OR
+
     Status Code: 403
     {
         "error": "Admin access required"
     }
+
+    Example CURL:
+    -------------
+    # Using Bearer token (admin personal API key)
+    curl -X POST http://localhost:5000/api/v1/admin/approve-user/<user_id> \
+        -H "Authorization: Bearer <admin_api_key>"
+
+    # Using Hermes static key
+    curl -X POST http://localhost:5000/api/v1/admin/approve-user/<user_id> \
+        -H "X-STATIC-KEY: <hermes_static_key>"
     """
     user = User.query.get(user_id)
     if not user:
@@ -74,6 +89,18 @@ def approve_api_key(user_id):
     user.api_key_approved = True
     db.session.commit()
 
+    # Send email to the user confirming the approval
+    send_email(
+        to=user.email,
+        subject="Hermes API Access Approved ✅",
+        html_template="approval.html",
+        template_context={
+            "name": user.name, 
+            "api_key": user.api_key, 
+            "homepage_url": "hermes.com"
+        }
+    )
+
     return jsonify({
         "success": True,
         "user_id": user.id,
@@ -87,11 +114,14 @@ def list_users_admin():
     """
     List all registered users (admin-only).
 
-    Endpoint: GET /api/v1/admin/list-users
+    Endpoint:
+    ---------
+    GET /api/v1/admin/list-users
 
     Headers:
     --------
-    - X-API-KEY: <Admin user's personal API key> OR
+    - Authorization: Bearer <Admin user's personal API key>
+      OR
     - X-STATIC-KEY: <Hermes static API key>
 
     Description:
@@ -122,6 +152,16 @@ def list_users_admin():
     {
         "error": "Admin access required"
     }
+
+    Example CURL:
+    -------------
+    # Using Bearer token (admin personal API key)
+    curl -X GET http://localhost:5000/api/v1/admin/list-users \
+        -H "Authorization: Bearer <admin_api_key>"
+
+    # Using Hermes static key
+    curl -X GET http://localhost:5000/api/v1/admin/list-users \
+        -H "X-STATIC-KEY: <hermes_static_key>"
     """
     users = User.query.all()
     user_list = [
@@ -137,3 +177,73 @@ def list_users_admin():
         } for u in users
     ]
     return jsonify({"success": True, "users": user_list})
+
+
+@admin_bp.route("/delete-user/<user_id>", methods=["DELETE"])
+@admin_only
+def delete_user(user_id):
+    """
+    Delete a user (admin-only).
+
+    Endpoint:
+    ---------
+    DELETE /api/v1/admin/delete-user/<user_id>
+
+    Headers:
+    --------
+    - Authorization: Bearer <Admin user's personal API key>
+      OR
+    - X-STATIC-KEY: <Hermes static API key>
+
+    Description:
+    ------------
+    Admins can delete a user account using this endpoint. All associated EmailBots
+    will also be deleted automatically due to cascade behavior in the database.
+
+    URL Parameters:
+    ---------------
+    - user_id: ID of the user to delete.
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "User deleted successfully",
+        "user_id": "<user_id>"
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 404
+    {
+        "error": "User not found"
+    }
+
+    Status Code: 403
+    {
+        "error": "Admin access required"
+    }
+
+    Example CURL:
+    -------------
+    # Using Bearer token (admin personal API key)
+    curl -X DELETE http://localhost:5000/api/v1/admin/delete-user/<user_id> \
+        -H "Authorization: Bearer <admin_api_key>"
+
+    # Using Hermes static key
+    curl -X DELETE http://localhost:5000/api/v1/admin/delete-user/<user_id> \
+        -H "X-STATIC-KEY: <hermes_static_key>"
+    """
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "User deleted successfully",
+        "user_id": user_id
+    })

@@ -1,0 +1,21 @@
+{% extends "email_base.html" %}
+
+{% block content %}
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #2c7be5;">✅ Your Hermes API Access Has Been Approved!</h2>
+
+    <p>Hello {{ name }},</p>
+
+    <p>Great news! Your Hermes API request has been approved. You can now use your personal API key to send emails using the Hermes platform, completely free of cost.</p>
+
+    <h3>Your API Key:</h3>
+    <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 5px;">{{ api_key }}</pre>
+
+    <p>With this API key, you can start sending emails programmatically using the main endpoint:</p>
+    <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 5px;">POST /api/v1/send-email</pre>
+
+    <p>For more information, documentation, and examples, please visit the <a href="{{ homepage_url }}" target="_blank" style="color: #2c7be5;">Hermes homepage</a>.</p>
+
+    <p>Happy emailing! 📩</p>
+</div>
+{% endblock %}

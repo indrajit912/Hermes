@@ -10,4 +10,4 @@ BOT_SMTP_PORT=587
 
 # Use the scripts/generate_keys.py to generate this keys.
 API_STATIC_KEY=f1439347d2134c8chd378247abe1053981 # this key is for trusted apps
-FERNET_KEY=VgHfldtfhLLT1ygToqJ4onmBvZomw2eqlGPQFpCfETU=
+FERNET_KEY=YouR_FERNET_KEY_====

@@ -16,6 +16,14 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     api_key_approved = db.Column(db.Boolean, default=False)
 
+    # Cascade delete: remove all associated EmailBots when this user is deleted
+    email_bots = db.relationship(
+        "EmailBot",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy=True
+    )
+
     def __repr__(self):
         return f"<User {self.email}>"
 
@@ -64,7 +72,7 @@ class EmailBot(db.Model):
     smtp_port = db.Column(db.Integer, nullable=False, default=587)
 
     # Relationship to user
-    user = db.relationship("User", backref=db.backref("email_bots", lazy=True))
+    user = db.relationship("User", back_populates="email_bots")
 
     def __repr__(self):
         return f"<EmailBot {self.username or self.email}>"

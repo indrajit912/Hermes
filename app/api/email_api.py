@@ -12,17 +12,17 @@ def send_email():
     """
     Send an email using a specified EmailBot or the default Hermes bot.
 
-    Endpoint: POST /send-email
+    Endpoint: POST /api/v1/send-email
 
     Headers:
     --------
     - Authorization: Bearer <User personal API key>
-    - X-STATIC-KEY: <Hermes static API key>  (optional)
 
     Request JSON:
     -------------
     {
         "bot_id": "<optional: EmailBot ID to use>",    # optional
+        "from_name": "Indrajit's Bot",
         "to": ["recipient1@example.com"],
         "subject": "Email Subject",
         "email_plain_text": "Plain text body",
@@ -87,6 +87,7 @@ def send_email():
             cc=data.get("cc"),
             bcc=data.get("bcc"),
             attachments=data.get("attachments"),
+            formataddr_text=data.get("from_name")
         )
         msg.send(
             sender_email_password=sender_password,

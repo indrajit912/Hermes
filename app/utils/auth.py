@@ -42,6 +42,7 @@ def admin_only(f):
     def decorated(*args, **kwargs):
         # Check for static API key first (trusted apps)
         static_key = request.headers.get("X-STATIC-KEY")
+        
         if static_key and static_key == current_app.config.get("API_STATIC_KEY"):
             return f(*args, **kwargs)
 

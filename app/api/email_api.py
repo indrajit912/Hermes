@@ -8,14 +8,34 @@ from app.models import EmailBot
 from app.utils.email_message import EmailMessage
 from app.utils.auth import get_current_user, require_api_key
 
-email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
+logger = logging.getLogger(__name__)
 
+email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 
 @email_bp.route("/send-email", methods=["POST"])
 @require_api_key
 def send_email():
-    logger = logging.getLogger("hermes")
-    logger.info(f"Send email request received from user: {get_current_user().email if get_current_user() else 'Unknown'}")
+    """
+    Send an email using a specified or default bot.
+
+    Endpoint: POST /api/v1/send-email
+
+    Expects JSON with:
+      - to: recipient email address (required)
+      - subject: email subject (optional)
+      - email_plain_text: plain text body (optional)
+      - email_html_text: HTML body (optional)
+      - cc: list of CC addresses (optional)
+      - bcc: list of BCC addresses (optional)
+      - from_name: sender name (optional)
+      - bot_id: use a specific EmailBot (optional)
+      - attachments: 
+          - list of dicts with {"filename": ..., "content": ...} (base64-encoded)
+          - or list of file paths (strings)
+          - or a single file path (string)
+        If a list of file paths is provided, will attempt to convert each to {"filename", "content"} if possible.
+    Returns JSON with success status and message or error.
+    """
     data = request.json
     user = get_current_user()
     if not user:
@@ -44,7 +64,27 @@ def send_email():
 
     # Handle attachments: decode base64 and save as temp files if needed
     attachments = []
-    for att in data.get("attachments", []):
+    raw_attachments = data.get("attachments", [])
+    # If attachments is a single string (file path), convert to list
+    if isinstance(raw_attachments, str):
+        raw_attachments = [raw_attachments]
+    # If attachments is a list of file paths, try to convert to dicts
+    if isinstance(raw_attachments, list) and all(isinstance(a, str) for a in raw_attachments):
+        converted = []
+        for path in raw_attachments:
+            try:
+                with open(path, "rb") as f:
+                    content = f.read()
+                converted.append({
+                    "filename": os.path.basename(path),
+                    "content": base64.b64encode(content).decode("utf-8")
+                })
+            except Exception:
+                # If file can't be read, keep as path
+                converted.append(path)
+        raw_attachments = converted
+
+    for att in raw_attachments:
         if isinstance(att, dict) and "filename" in att and "content" in att:
             try:
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='_' + att["filename"])

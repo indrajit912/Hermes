@@ -38,7 +38,7 @@ data = {
     "email_plain_text": "Body text",
     "email_html_text": "<p>Body HTML</p>"
 }
-resp = requests.post("https://your-hermes-url/api/v1/send-email", headers=headers, json=data)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
 </code></pre>
               <b>Tips for Beginners:</b>
@@ -76,7 +76,7 @@ print(resp.json())
                   <div class="accordion-body">
                     <pre class="bg-light p-2 rounded"><code>import requests
 
-resp = requests.post("https://your-hermes-url/api/v1/register", json={
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/register", json={
     "name": "Alice Example",
     "email": "alice@example.com"
 })
@@ -106,7 +106,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.post("https://your-hermes-url/api/v1/apikey/rotate", headers=headers)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/apikey/rotate", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -133,7 +133,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.get("https://your-hermes-url/api/v1/me", headers=headers)
+resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/me", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -161,7 +161,7 @@ Query Params: limit (default: 20)</code></pre>
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.get("https://your-hermes-url/api/v1/logs?limit=10", headers=headers)
+resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/logs?limit=10", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -211,7 +211,7 @@ data = {
     "email_plain_text": "Body text",
     "email_html_text": "<p>Body HTML</p>",
 }
-resp = requests.post("https://your-hermes-url/api/v1/send-email", headers=headers, json=data)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
 </code></pre>
                   </div>
@@ -256,7 +256,7 @@ data = {
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587
 }
-resp = requests.post("https://your-hermes-url/api/v1/emailbot", headers=headers, json=data)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/emailbot", headers=headers, json=data)
 print(resp.json())
 </code></pre>
                   </div>
@@ -282,7 +282,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.get("https://your-hermes-url/api/v1/emailbot", headers=headers)
+resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/emailbot", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -323,7 +323,7 @@ data = {
     "smtp_server": "smtp.outlook.com",
     "smtp_port": 465
 }
-resp = requests.put("https://your-hermes-url/api/v1/emailbot/BOT_ID", headers=headers, json=data)
+resp = requests.put("https://hermesbot.pythonanywhere.com/api/v1/emailbot/BOT_ID", headers=headers, json=data)
 print(resp.json())
 </code></pre>
                   </div>
@@ -350,7 +350,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.delete("https://your-hermes-url/api/v1/emailbot/BOT_ID", headers=headers)
+resp = requests.delete("https://hermesbot.pythonanywhere.com/api/v1/emailbot/BOT_ID", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -403,7 +403,7 @@ data = {
     "bcc": ["bcc@example.com"],
     "attachments": ["path/to/file.pdf"]
 }
-resp = requests.post("https://your-hermes-url/api/v1/send-email", headers=headers, json=data)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
 </code></pre>
                   </div>
@@ -434,7 +434,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer ADMIN_API_KEY"}
-resp = requests.post("https://your-hermes-url/api/v1/admin/approve-user/USER_ID", headers=headers)
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/admin/approve-user/USER_ID", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -461,7 +461,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer ADMIN_API_KEY"}
-resp = requests.get("https://your-hermes-url/api/v1/admin/list-users", headers=headers)
+resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/admin/list-users", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -488,7 +488,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer ADMIN_API_KEY"}
-resp = requests.delete("https://your-hermes-url/api/v1/admin/delete-user/USER_ID", headers=headers)
+resp = requests.delete("https://hermesbot.pythonanywhere.com/api/v1/admin/delete-user/USER_ID", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>

@@ -20,6 +20,8 @@ class Config:
     API_STATIC_KEY = os.getenv("API_STATIC_KEY")
     FERNET_KEY = os.getenv("FERNET_KEY")
 
+    HERMES_HOMEPAGE = "https://hermesbot.pythonanywhere.com"
+
     # Bot Email
     BOT_EMAIL = os.getenv("BOT_EMAIL")
     BOT_PASSWORD = os.getenv("BOT_PASSWORD")

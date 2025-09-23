@@ -1,9 +1,13 @@
+import logging
+
 from flask import Blueprint, jsonify
+
 from app.models import User
 from app.extensions import db
 from app.utils.auth import admin_only
 from app.utils.mailer import send_email
-import logging
+from config import Config
+
 
 admin_bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
@@ -38,7 +42,7 @@ def approve_user(user_id):
         template_context={
             "name": user.name, 
             "api_key": user.api_key, 
-            "homepage_url": "hermes.com"
+            "hermes_homepage": Config.HERMES_HOMEPAGE
         }
     )
 

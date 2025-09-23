@@ -6,14 +6,13 @@ from app.models import User, EmailBot, Log
 from app.utils.auth import get_current_user, require_api_key, log_request
 from app.utils.mailer import send_email
 
+logger = logging.getLogger("hermes")
 
 user_bp = Blueprint("user_api", __name__, url_prefix="/api/v1")
 
 
 @user_bp.route("/register", methods=["POST"])
 def register():
-    logger = logging.getLogger("hermes")
-    logger.info(f"Register API called for email: {request.json.get('email')}")
     """
     Request a personal API key for Hermes.
 
@@ -53,6 +52,7 @@ def register():
     """
     data = request.json
     name, email = data.get("name"), data.get("email")
+    logger.info(f"Register API called for email: {email}")
 
     if not name or not email:
         logger.warning("Name and email required for registration")

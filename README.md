@@ -1,99 +1,103 @@
-# Hermes
-
-Hermes is a Flask-based API system with user authentication via API keys, admin approval workflows, and support for Email Bots.
-It includes both REST API endpoints and CLI scripts for managing users, keys, and configurations.
-
----
-
-## Features
-
-* **User Registration & API Keys**
-
-  * Users can register via API and receive a pending API key.
-  * Admins approve API keys before they become active.
-  * Approved keys are delivered via email to the user.
-
-* **Admin Utilities**
-
-  * Approve/reject users.
-  * List all users.
-  * Manage user roles (promote to admin / revoke admin).
-  * Rotate encryption keys safely.
-
-* **Email Bots**
-
-  * Users can create email bots with encrypted credentials.
-  * Supports multiple bots per user.
-  * Secure storage of email + app password.
-
-* **Security**
-
-  * All sensitive fields (API keys, emails, passwords) are encrypted.
-  * API access requires a valid `Authorization: Bearer <API_KEY>` header.
-  * Admin routes are restricted to admins only.
-
----
-
-## API Overview
-
-### User APIs
-
-* **Request API Key**
-  `POST /api/v1/request-api-key`
-
-* **Add Email Bot**
-  `POST /api/v1/emailbot`
-
-* **List Email Bots**
-  `GET /api/v1/emailbot`
-
-### Admin APIs
-
-* **Approve API Key**
-  `POST /api/v1/admin/approve-api-key/<user_id>`
-
-* **List Users**
-  `GET /api/v1/admin/list-users`
-
-### Send Email API - [Click here](./docs/send_email.md)
 
 
----
+# Hermes API
+
+Hermes is a free, secure, and developer-friendly API for sending emails from your applications. It provides personal API keys, EmailBot management, and robust admin workflows—no need to set up your own email server.
+
+## What is Hermes?
+
+Hermes lets you send emails programmatically using a simple REST API. You can use your personal API key or create EmailBots for custom sender addresses. All sensitive data is encrypted, and admin approval is required for new users.
+
+## Key Features
+
+- **Send Emails via API**: Integrate email sending into any app with a single POST request.
+- **Personal API Keys**: Register and get your own API key (admin approval required).
+- **EmailBot Management**: Create, update, and delete EmailBots for custom sender addresses.
+- **Admin Controls**: Approve users, manage roles, rotate encryption keys, and view all users.
+- **Security**: All sensitive fields (API keys, emails, passwords) are encrypted.
+- **Activity Logs**: Fetch your recent API activity logs.
+
+## API Endpoints
+
+### User Endpoints
+
+- `POST /api/v1/register` — Request a personal API key (admin approval required).
+- `POST /api/v1/send-email` — Send an email using your API key or an EmailBot.
+- `POST /api/v1/apikey/rotate` — Rotate your personal API key.
+- `POST /api/v1/emailbot` — Add a new EmailBot.
+- `GET /api/v1/emailbot` — List your EmailBots.
+- `PUT /api/v1/emailbot/<bot_id>` — Update an EmailBot.
+- `DELETE /api/v1/emailbot/<bot_id>` — Delete an EmailBot.
+- `GET /api/v1/logs` — Fetch your recent API activity logs.
+
+### Admin Endpoints
+
+- `POST /api/v1/admin/approve-user/<user_id>` — Approve a pending user.
+- `GET /api/v1/admin/list-users` — List all registered users.
+- `DELETE /api/v1/admin/delete-user/<user_id>` — Delete a user.
+
+## Example: Send Email
+
+```http
+POST /api/v1/send-email
+Authorization: Bearer <User personal API key>
+Content-Type: application/json
+
+{
+  "bot_id": "<optional: EmailBot ID>",
+  "from_name": "Your App",
+  "to": ["recipient@example.com"],
+  "subject": "Hello from Hermes",
+  "email_plain_text": "Plain text body",
+  "email_html_text": "<p>HTML body</p>",
+  "cc": ["cc@example.com"],
+  "bcc": ["bcc@example.com"],
+  "attachments": ["path/to/file.pdf"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Email sent"
+}
+```
+
+See more details in [`docs/send_email.md`](./docs/send_email.md).
 
 ## CLI Utilities
 
-Examples:
+Run management scripts from the `scripts/` directory:
 
 ```bash
-# Create user
+# Create a user
 python scripts/manage_users.py create --name "Alice" --email "alice@example.com"
 
-# Approve user
+# Approve a user
 python scripts/manage_users.py approve alice@example.com
 
-# Update user (make admin)
+# Promote to admin
 python scripts/manage_users.py update alice@example.com --make-admin
 
-# Delete user
+# Delete a user
 python scripts/manage_users.py delete alice@example.com
 
-# List all users
+# List users
 python scripts/manage_users.py list
 
 # Rotate encryption key
 python scripts/rotate_key.py
 ```
 
----
+## Security Notes
 
-## Notes
-
-* API keys are shown **only once** after admin approval.
-* All sensitive values are encrypted in the database.
-* Email notifications are sent on approval.
-* Rotate encryption keys carefully using the provided script.
+- API keys are displayed only once after approval.
+- All sensitive values are encrypted in the database.
+- Email notifications are sent on approval.
+- Use the key rotation script with care.
 
 ---
 
-📧 Maintainer: **Indrajit Ghosh**
+**Maintainer:** [Indrajit Ghosh](https://indrajitghosh.onrender.com)
 

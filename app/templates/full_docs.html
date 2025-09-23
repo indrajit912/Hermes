@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <nav class="col-md-3 mb-4">
+    <div class="list-group sticky-top">
+      <a href="#user" class="list-group-item list-group-item-action">User APIs</a>
+      <a href="#email" class="list-group-item list-group-item-action">Send Email API</a>
+      <a href="#emailbot" class="list-group-item list-group-item-action">EmailBot APIs</a>
+      <a href="#admin" class="list-group-item list-group-item-action">Admin APIs</a>
+    </div>
+  </nav>
+  <div class="col-md-9">
+      <!-- User APIs -->
+      <section id="user" class="mb-5">
+        <h2 class="h4 text-success mb-3">User APIs</h2>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Register</h5>
+            <p>Request a personal API key.</p>
+            <span class="badge bg-primary">POST /api/v1/register</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>{
+  "name": "Alice Example",
+  "email": "alice@example.com"
+}</code></pre>
+            <div class="accordion" id="registerAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="registerPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#registerPythonCode" aria-expanded="false" aria-controls="registerPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="registerPythonCode" class="accordion-collapse collapse" aria-labelledby="registerPython" data-bs-parent="#registerAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+resp = requests.post("https://your-hermes-url/api/v1/register", json={
+    "name": "Alice Example",
+    "email": "alice@example.com"
+})
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Rotate API Key</h5>
+            <p>Rotate your personal API key.</p>
+            <span class="badge bg-primary">POST /api/v1/apikey/rotate</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;</code></pre>
+            <div class="accordion" id="rotateAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="rotatePython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rotatePythonCode" aria-expanded="false" aria-controls="rotatePythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="rotatePythonCode" class="accordion-collapse collapse" aria-labelledby="rotatePython" data-bs-parent="#rotateAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+resp = requests.post("https://your-hermes-url/api/v1/apikey/rotate", headers=headers)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Send Email API -->
+      <section id="email" class="mb-5">
+        <h2 class="h4 text-primary mb-3">Send Email API</h2>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Send Email</h5>
+            <p>Send an email using your API key or an EmailBot.</p>
+            <span class="badge bg-primary">POST /api/v1/send-email</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
+{
+  "to": ["recipient@example.com"],
+  "subject": "Hello from Hermes",
+  "email_plain_text": "Body text",
+  "email_html_text": "<p>Body HTML</p>",
+  "cc": ["cc@example.com"],
+  "bcc": ["bcc@example.com"]
+}</code></pre>
+            <div class="accordion" id="sendEmailAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="sendEmailPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sendEmailPythonCode" aria-expanded="false" aria-controls="sendEmailPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="sendEmailPythonCode" class="accordion-collapse collapse" aria-labelledby="sendEmailPython" data-bs-parent="#sendEmailAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+data = {
+    "to": ["recipient@example.com"],
+    "subject": "Hello from Hermes",
+    "email_plain_text": "Body text",
+    "email_html_text": "<p>Body HTML</p>"
+}
+resp = requests.post("https://your-hermes-url/api/v1/send-email", headers=headers, json=data)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- EmailBot APIs -->
+      <section id="emailbot" class="mb-5">
+        <h2 class="h4 text-warning mb-3">EmailBot APIs</h2>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Add EmailBot</h5>
+            <span class="badge bg-warning text-dark">POST /api/v1/emailbot</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
+{
+  "username": "AliceBot",
+  "email": "alicebot@gmail.com",
+  "password": "app-password",
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587
+}</code></pre>
+            <div class="accordion" id="addBotAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="addBotPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#addBotPythonCode" aria-expanded="false" aria-controls="addBotPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="addBotPythonCode" class="accordion-collapse collapse" aria-labelledby="addBotPython" data-bs-parent="#addBotAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+data = {
+    "username": "AliceBot",
+    "email": "alicebot@gmail.com",
+    "password": "app-password",
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587
+}
+resp = requests.post("https://your-hermes-url/api/v1/emailbot", headers=headers, json=data)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">List EmailBots</h5>
+            <span class="badge bg-warning text-dark">GET /api/v1/emailbot</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;</code></pre>
+            <div class="accordion" id="listBotAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="listBotPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#listBotPythonCode" aria-expanded="false" aria-controls="listBotPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="listBotPythonCode" class="accordion-collapse collapse" aria-labelledby="listBotPython" data-bs-parent="#listBotAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+resp = requests.get("https://your-hermes-url/api/v1/emailbot", headers=headers)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Admin APIs -->
+      <section id="admin" class="mb-5">
+        <h2 class="h4 text-danger mb-3">Admin APIs</h2>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Approve User</h5>
+            <span class="badge bg-danger">POST /api/v1/admin/approve-user/&lt;user_id&gt;</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;ADMIN_API_KEY&gt;</code></pre>
+            <div class="accordion" id="approveAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="approvePython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#approvePythonCode" aria-expanded="false" aria-controls="approvePythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="approvePythonCode" class="accordion-collapse collapse" aria-labelledby="approvePython" data-bs-parent="#approveAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer ADMIN_API_KEY"}
+resp = requests.post("https://your-hermes-url/api/v1/admin/approve-user/USER_ID", headers=headers)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">List Users</h5>
+            <span class="badge bg-danger">GET /api/v1/admin/list-users</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;ADMIN_API_KEY&gt;</code></pre>
+            <div class="accordion" id="listUsersAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="listUsersPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#listUsersPythonCode" aria-expanded="false" aria-controls="listUsersPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="listUsersPythonCode" class="accordion-collapse collapse" aria-labelledby="listUsersPython" data-bs-parent="#listUsersAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+
+headers = {"Authorization": "Bearer ADMIN_API_KEY"}
+resp = requests.get("https://your-hermes-url/api/v1/admin/list-users", headers=headers)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

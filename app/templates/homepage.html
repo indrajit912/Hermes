@@ -1,29 +1,106 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Page Header -->
+<!-- Hero Section -->
 <div class="text-center mb-5">
-    <h1 class="text-primary">Hermes API - Send Email</h1>
-    <p class="lead">
-        Hermes is a free API to send emails using your personal API key or an EmailBot.
-        It allows developers to integrate email sending functionality into their applications without setting up an email server.
-    </p>
+    <h1 class="display-4 fw-bold text-primary">Hermes API</h1>
+    <p class="fst-italic text-secondary mb-2">Named after <b>Hermes</b>, the swift messenger of the gods.</p>
+    <p class="lead">Send emails from your apps with a secure, developer-friendly REST API.<br>Personal API keys, EmailBots, and admin workflows—no email server required.</p>
 </div>
 
-<!-- USER-LEVEL ENDPOINTS -->
+<!-- Quickstart -->
+<div class="row justify-content-center mb-5">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-success">Quickstart</h5>
+                <ol class="mb-0">
+                    <li>Register for an API key (<code>POST /api/v1/register</code>).</li>
+                    <li>Wait for admin approval (API key sent via email).</li>
+                    <li>Send emails using <code>POST /api/v1/send-email</code> with your API key.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Endpoints Overview -->
 <div class="mb-4">
-    <h4>👤 User API Endpoints</h4>
+    <h2 class="h4 fw-bold">API Endpoints</h2>
 </div>
 
-{% include '_endpoints/_register_endpoint.html' %}
+<div class="row g-4">
+    <!-- User Endpoints -->
+    <div class="col-md-6">
+        <div class="card h-100 border-primary shadow-sm">
+            <div class="card-header bg-primary text-white">User APIs</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-3">
+                    <li><b>Register:</b> <code>POST /api/v1/register</code></li>
+                    <li><b>Send Email:</b> <code>POST /api/v1/send-email</code></li>
+                    <li><b>Rotate API Key:</b> <code>POST /api/v1/apikey/rotate</code></li>
+                    <li><b>EmailBot CRUD:</b> <code>POST/GET/PUT/DELETE /api/v1/emailbot</code></li>
+                    <li><b>Activity Logs:</b> <code>GET /api/v1/logs</code></li>
+                </ul>
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#userApiDetails" aria-expanded="false" aria-controls="userApiDetails">Show Details</button>
+                <div class="collapse mt-3" id="userApiDetails">
+                    <pre class="bg-light p-2 rounded"><code>POST /api/v1/send-email
+Headers: Authorization: Bearer &lt;API_KEY&gt;
+Body: {
+    "to": ["recipient@example.com"],
+    "subject": "Hello",
+    "email_plain_text": "Body text",
+    "email_html_text": "&lt;p&gt;Body HTML&lt;/p&gt;"
+}
+</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Admin Endpoints -->
+    <div class="col-md-6">
+        <div class="card h-100 border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">Admin APIs</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-3">
+                    <li><b>Approve User:</b> <code>POST /api/v1/admin/approve-user/&lt;user_id&gt;</code></li>
+                    <li><b>List Users:</b> <code>GET /api/v1/admin/list-users</code></li>
+                    <li><b>Delete User:</b> <code>DELETE /api/v1/admin/delete-user/&lt;user_id&gt;</code></li>
+                </ul>
+                <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#adminApiDetails" aria-expanded="false" aria-controls="adminApiDetails">Show Details</button>
+                <div class="collapse mt-3" id="adminApiDetails">
+                    <pre class="bg-light p-2 rounded"><code>POST /api/v1/admin/approve-user/&lt;user_id&gt;
+Headers: Authorization: Bearer &lt;ADMIN_API_KEY&gt;
+Response: {
+    "success": true,
+    "api_key": "&lt;plaintext API key&gt;"
+}
+</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% include '_endpoints/_send_email_endpoint.html' %}
+<!-- Security & Notes -->
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="alert alert-info shadow-sm">
+            <h5 class="mb-2">Security &amp; Usage Notes</h5>
+            <ul class="mb-0">
+                <li>API keys are shown only once after approval.</li>
+                <li>All sensitive values are encrypted in the database.</li>
+                <li>Email notifications are sent on approval.</li>
+                <li>Use the key rotation script with care.</li>
+            </ul>
+        </div>
+    </div>
+</div>
 
-{% include '_endpoints/_rotate_apikey_endpoint.html' %}
-
-{% include '_endpoints/_emailbot_crud_endpoint.html' %}
-
-{% include '_endpoints/_log_endpoint.html' %}
-
+<!-- Footer Links -->
+<div class="text-center mt-4">
+    <a href="{{ url_for('home.full_docs') }}" class="btn btn-link">Full Documentation</a>
+    <a href="https://indrajitghosh.onrender.com/contact" class="btn btn-link">Contact Us</a>
+</div>
 
 {% endblock %}

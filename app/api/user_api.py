@@ -96,6 +96,87 @@ def register():
         }
     }), 201
 
+# -------------------------
+# GET CURRENT USER PROFILE
+# -------------------------
+@user_bp.route("/me", methods=["GET"])
+@require_api_key
+def get_profile():
+    """
+    Get current authenticated user profile.
+
+    Endpoint: GET /api/v1/me
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "user": {
+            "id": "<user_id>",
+            "name": "Alice Example",
+            "email": "alice@example.com",
+            "api_key_approved": true
+        }
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "api_key_approved": user.api_key_approved
+        }
+    })
+
+
+# -------------------------
+# ROTATE API KEY
+# -------------------------
+@user_bp.route("/apikey/rotate", methods=["POST"])
+@require_api_key
+def rotate_api_key():
+    """
+    Rotate the user's API key (invalidate old one, issue new).
+
+    Endpoint: POST /api/v1/apikey/rotate
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "API key rotated successfully",
+        "new_api_key": "<new_api_key>"
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    new_key = str(uuid.uuid4().hex)
+    user.api_key = new_key
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "API key rotated successfully",
+        "new_api_key": new_key
+    })
+
 
 # -------------------------
 # ADD EMAIL BOT

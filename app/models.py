@@ -1,9 +1,9 @@
 # models.py
 
 import uuid
+from datetime import datetime
 from app.extensions import db
 from app.utils.crypto import encrypt_value, decrypt_value
-from config import Config
 
 class User(db.Model):
     __tablename__ = "user"
@@ -120,3 +120,20 @@ class EmailBot(db.Model):
     def _set_password(self, value, fernet_key):
         """This method is used during key rotation"""
         self.password_encrypted = encrypt_value(value, key=fernet_key)
+
+
+class Log(db.Model):
+    __tablename__ = "log"
+
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4().hex))
+    user_id = db.Column(db.String, db.ForeignKey("user.id"), nullable=False)
+    endpoint = db.Column(db.String(256), nullable=False)
+    method = db.Column(db.String(10), nullable=False)
+    status_code = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationship to user
+    user = db.relationship("User", backref=db.backref("logs", lazy=True))
+
+    def __repr__(self):
+        return f"<Log {self.method} {self.endpoint} by {self.user_id} at {self.timestamp}>"

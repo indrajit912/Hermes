@@ -1,30 +1,37 @@
 """
-Hermes - manage_users.py
+Hermes - cli.py
 Author: Indrajit Ghosh
 Created On: Sep 20, 2025
 
 # Usage Examples:
 
 # Create a normal user
-python -m scripts.manage_users create --name "Alice" --email "alice@example.com"
+python -m scripts.cli create --name "Alice" --email "alice@example.com"
 
 # Create an admin user
-python -m scripts.manage_users create --name "Bob" --email "bob@example.com" --admin
+python -m scripts.cli create --name "Bob" --email "bob@example.com" --admin
 
 # Approve user
-python -m scripts.manage_users approve alice@example.com
+python -m scripts.cli approve alice@example.com
 
 # Update user (make admin)
-python -m scripts.manage_users update alice@example.com --make-admin
+python -m scripts.cli update alice@example.com --make-admin
 
 # Update user (rename + change email)
-python -m scripts.manage_users update alice@example.com --name "Alicia" --new-email "alicia@example.com"
+python -m scripts.cli update alice@example.com --name "Alicia" --new-email "alicia@example.com"
 
 # Delete user
-python -m scripts.manage_users delete alicia@example.com
+python -m scripts.cli delete alicia@example.com
 
 # List all users
-python -m scripts.manage_users list
+python -m scripts.cli list-user
+
+# Rotate encryption keys
+python -m scripts.cli rotate --fernet-key
+python -m scripts.cli rotate --api-secret-key
+
+# Generate new keys
+python -m scripts.cli generate-keys
 """
 
 import click
@@ -37,7 +44,17 @@ app = create_app()
 
 @click.group()
 def cli():
-    """Manage Hermes Users"""
+    """CLI for Hermes
+
+    Available Commands:
+      create         Create a new user (pending approval)
+      approve        Approve a user
+      update         Update user details (make admin, rename, change email)
+      delete         Delete a user
+      list-user      List all users
+      rotate         Rotate encryption keys (--fernet-key, --api-secret-key)
+      generate-keys  Generate new keys
+    """
     pass
 
 # -------------------------
@@ -167,7 +184,7 @@ def update_user(email, name, new_email, make_admin, revoke_admin):
 # -------------------------
 # LIST USERS
 # -------------------------
-@cli.command("list")
+@cli.command("list-user")
 def list_users():
     """List all users"""
     with app.app_context():
@@ -186,34 +203,67 @@ def list_users():
 # -------------------------
 @cli.command("help")
 def help_command():
-    """Show detailed examples of how to use Hermes manage_users.py"""
+    """Show detailed examples of how to use Hermes"""
     examples = """
-Hermes - manage_users.py
+Hermes - cli.py
 Author: Indrajit Ghosh
 Created On: Sep 20, 2025
 
 # Create a normal user
-python -m scripts.manage_users create --name "Alice" --email "alice@example.com"
+python -m scripts.cli create --name "Alice" --email "alice@example.com"
 
 # Create an admin user
-python -m scripts.manage_users create --name "Bob" --email "bob@example.com" --admin
+python -m scripts.cli create --name "Bob" --email "bob@example.com" --admin
 
 # Approve user
-python -m scripts.manage_users approve alice@example.com
+python -m scripts.cli approve alice@example.com
 
 # Update user (make admin)
-python -m scripts.manage_users update alice@example.com --make-admin
+python -m scripts.cli update alice@example.com --make-admin
 
 # Update user (rename + change email)
-python -m scripts.manage_users update alice@example.com --name "Alicia" --new-email "alicia@example.com"
+python -m scripts.cli update alice@example.com --name "Alicia" --new-email "alicia@example.com"
 
 # Delete user
-python -m scripts.manage_users delete alicia@example.com
+python -m scripts.cli delete alicia@example.com
 
 # List all users
-python -m scripts.manage_users list
+python -m scripts.cli list-user
+
+# Rotate encryption keys
+python -m scripts.cli rotate --fernet-key
+python -m scripts.cli rotate --api-secret-key
+
+# Generate new keys
+python -m scripts.cli generate-keys
 """
     click.echo(examples)
+
+
+# -------------------------
+# ROTATE KEYS
+# -------------------------
+@cli.command("rotate")
+@click.option("--fernet-key", is_flag=True, help="Rotate the Fernet encryption key")
+@click.option("--api-secret-key", is_flag=True, help="Rotate the API secret key")
+def rotate_keys(fernet_key, api_secret_key):
+    """Rotate encryption keys using scripts/rotate_keys.py"""
+    import subprocess
+    args = ["python", "scripts/rotate_keys.py"]
+    if fernet_key:
+        args.append("--fernet-key")
+    if api_secret_key:
+        args.append("--api-secret-key")
+    subprocess.run(args)
+
+# -------------------------
+# GENERATE KEYS
+# -------------------------
+@cli.command("generate-keys")
+def generate_keys():
+    """Generate new keys using scripts/generate_keys.py"""
+    import subprocess
+    subprocess.run(["python", "scripts/generate_keys.py"])
 
 
 if __name__ == "__main__":

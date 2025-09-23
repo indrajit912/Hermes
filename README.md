@@ -1,5 +1,3 @@
-
-
 # Hermes API
 
 Hermes is a free, secure, and developer-friendly API for sending emails from your applications. It provides personal API keys, EmailBot management, and robust admin workflows—no need to set up your own email server.
@@ -100,4 +98,8 @@ python scripts/rotate_key.py
 ---
 
 **Maintainer:** [Indrajit Ghosh](https://indrajitghosh.onrender.com)
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
 

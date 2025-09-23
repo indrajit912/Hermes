@@ -1,7 +1,6 @@
 from flask import request, current_app, jsonify
 from functools import wraps
 from app.models import User
-from app.utils.crypto import decrypt_value
 
 def get_current_user():
     """

@@ -3,11 +3,12 @@
 import uuid
 from app.extensions import db
 from app.utils.crypto import encrypt_value, decrypt_value
+from config import Config
 
 class User(db.Model):
     __tablename__ = "user"
 
-    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4().hex))
     name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
 
@@ -43,6 +44,14 @@ class User(db.Model):
         else:
             self.api_key_encrypted = None
 
+    def _set_api_key(self, value, fernet_key):
+        """This method is used during key rotation"""
+        if value:
+            self.api_key_encrypted = encrypt_value(value, key=fernet_key)
+        else:
+            self.api_key_encrypted = None
+
+
     # --------- API Key Plain (Encrypted) ------------
     @property
     def api_key_plain(self):
@@ -59,11 +68,18 @@ class User(db.Model):
         else:
             self.api_key_plain_encrypted = None
 
+    def _set_api_key_plain(self, value, fernet_key):
+        """This method is used during key rotation"""
+        if value:
+            self.api_key_plain_encrypted = encrypt_value(value, key=fernet_key)
+        else:
+            self.api_key_plain_encrypted = None
+
     
 class EmailBot(db.Model):
     __tablename__ = "email_bot"
 
-    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4().hex))
     user_id = db.Column(db.String, db.ForeignKey("user.id"), nullable=False)
     username = db.Column(db.String(50), nullable=True)  # optional bot name
     email_encrypted = db.Column(db.String(256), nullable=False)
@@ -86,6 +102,10 @@ class EmailBot(db.Model):
     def email(self, value):
         """Encrypt and store email"""
         self.email_encrypted = encrypt_value(value)
+    
+    def _set_email(self, value, fernet_key):
+        """This method is used during key rotation"""
+        self.email_encrypted = encrypt_value(value, key=fernet_key)
 
     @property
     def password(self):
@@ -96,3 +116,7 @@ class EmailBot(db.Model):
     def password(self, value):
         """Encrypt and store password"""
         self.password_encrypted = encrypt_value(value)
+
+    def _set_password(self, value, fernet_key):
+        """This method is used during key rotation"""
+        self.password_encrypted = encrypt_value(value, key=fernet_key)

@@ -173,7 +173,13 @@ def list_users_admin():
             "is_admin": u.is_admin,
             "api_key": u.api_key,
             "api_key_plain": u.api_key_plain,
-            "email_bots": u.email_bots
+            "email_bots": [
+                {
+                    "bot_username": bot.username,
+                    "bot_id": bot.id
+                } 
+                for bot in u.email_bots
+            ]
         } for u in users
     ]
     return jsonify({"success": True, "users": user_list})

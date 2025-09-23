@@ -1,10 +1,10 @@
 import uuid
-from flask import Blueprint, request, jsonify, render_template, current_app
+from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import User, EmailBot
-from app.utils.auth import get_current_user
-from app.api.email_api import require_api_key
-from app.utils.email_message import EmailMessage
+from app.utils.auth import get_current_user, require_api_key
+from app.utils.mailer import send_email
+
 
 user_bp = Blueprint("user_api", __name__, url_prefix="/api/v1")
 
@@ -47,12 +47,6 @@ def register():
     {
         "error": "User already exists"
     }
-
-    Example CURL:
-    -------------
-    curl -X POST http://localhost:5000/api/v1/register \
-        -H "Content-Type: application/json" \
-        -d '{"name": "Alice", "email": "alice@example.com"}'
     """
     data = request.json
     name, email = data.get("name"), data.get("email")
@@ -64,7 +58,7 @@ def register():
     if existing:
         return jsonify({"error": "User already exists"}), 400
 
-    plain_key = str(uuid.uuid4())
+    plain_key = str(uuid.uuid4().hex)
     user = User(name=name, email=email, api_key_plain=plain_key)
     db.session.add(user)
     db.session.commit()
@@ -83,20 +77,12 @@ def register():
             "user_id": user.id
         }
 
-        html_body = render_template("new_user_notification.html", **context)
-
-        msg = EmailMessage(
-            sender_email_id=current_app.config.get('BOT_EMAIL'),
+        send_email(
             to=admin_emails,
             subject=subject,
-            email_html_text=html_body,
-            formataddr_text="Hermes Bot"
-        )
-
-        msg.send(
-            sender_email_password=current_app.config.get('BOT_PASSWORD'),
-            server_info=(current_app.config.get("BOT_MAIL_SERVER"), current_app.config.get("BOT_MAIL_PORT")),
-            print_success_status=False
+            html_template="new_user_notification.html",
+            template_context=context,
+            from_name="Hermes Bot"
         )
 
     return jsonify({
@@ -124,8 +110,7 @@ def add_email_bot():
 
     Headers:
     --------
-    - X-API-KEY: <User personal API key>
-    - X-STATIC-KEY: <Hermes static API key> (optional for admin/trusted apps)
+    - Authorization: Bearer <User personal API key>
 
     Request JSON:
     -------------
@@ -152,13 +137,6 @@ def add_email_bot():
     {
         "error": "Missing email or password"
     }
-
-    Example CURL:
-    -------------
-    curl -X POST http://localhost:5000/api/v1/emailbot \
-        -H "Content-Type: application/json" \
-        -H "X-API-KEY: <user_api_key>" \
-        -d '{"username": "AliceBot", "email": "alicebot@gmail.com", "password": "app-password"}'
     """
     user = get_current_user()
     if not user:
@@ -206,8 +184,7 @@ def list_email_bots():
 
     Headers:
     --------
-    - X-API-KEY: <User personal API key>
-    - X-STATIC-KEY: <Hermes static API key> (admin/trusted apps can view all)
+    - Authorization: Bearer <User personal API key>
 
     Response (Success):
     -------------------
@@ -216,7 +193,7 @@ def list_email_bots():
         "success": True,
         "bots": [
             {
-                "id": "<bot_id>",
+                "bot_id": "<bot_id>",
                 "username": "AliceBot",
                 "email": "alicebot@gmail.com",
                 "smtp_server": "smtp.gmail.com",
@@ -232,11 +209,6 @@ def list_email_bots():
     {
         "error": "User not found"
     }
-
-    Example CURL:
-    -------------
-    curl -X GET http://localhost:5000/api/v1/emailbot \
-        -H "X-API-KEY: <user_api_key>"
     """
     user = get_current_user()
     if not user:
@@ -244,7 +216,7 @@ def list_email_bots():
 
     bots = EmailBot.query.filter_by(user_id=user.id).all()
     bot_list = [{
-        "id": bot.id,
+        "bot_id": bot.id,
         "username": bot.username,
         "email": bot.email,  # decrypted automatically
         "smtp_server": bot.smtp_server,
@@ -252,3 +224,127 @@ def list_email_bots():
     } for bot in bots]
 
     return jsonify({"success": True, "bots": bot_list})
+
+
+# -------------------------
+# UPDATE EMAIL BOT
+# -------------------------
+@user_bp.route("/emailbot/<bot_id>", methods=["PUT"])
+@require_api_key
+def update_email_bot(bot_id):
+    """
+    Update an existing EmailBot of the authenticated user.
+
+    Endpoint: PUT /api/v1/emailbot/<bot_id>
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Request JSON (all fields optional, only send what you want to update):
+    ---------------------------------------------------------------------
+    {
+        "username": "UpdatedBotName",       # optional
+        "email": "updatedbot@gmail.com",    # optional
+        "password": "new-app-password",     # optional
+        "smtp_server": "smtp.outlook.com",  # optional
+        "smtp_port": 465                     # optional
+    }
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "EmailBot updated successfully",
+        "bot_id": "<bot_id>"
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 400
+    {
+        "error": "Bot not found"
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
+    if not bot:
+        return jsonify({"error": "Bot not found"}), 400
+
+    data = request.json or {}
+
+    if "username" in data:
+        bot.username = data["username"]
+    if "email" in data:
+        bot.email = data["email"]  # encrypted automatically
+    if "password" in data:
+        bot.password = data["password"]  # encrypted automatically
+    if "smtp_server" in data:
+        bot.smtp_server = data["smtp_server"]
+    if "smtp_port" in data:
+        bot.smtp_port = data["smtp_port"]
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "EmailBot updated successfully",
+        "bot_id": bot.id
+    })
+
+
+# -------------------------
+# DELETE EMAIL BOT
+# -------------------------
+@user_bp.route("/emailbot/<bot_id>", methods=["DELETE"])
+@require_api_key
+def delete_email_bot(bot_id):
+    """
+    Delete an EmailBot owned by the authenticated user.
+
+    Endpoint: DELETE /api/v1/emailbot/<bot_id>
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    URL Parameters:
+    ---------------
+    - bot_id: ID of the EmailBot to delete.
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "EmailBot deleted successfully",
+        "bot_id": "<bot_id>"
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 404
+    {
+        "error": "EmailBot not found or not owned by user"
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
+    if not bot:
+        return jsonify({"error": "EmailBot not found or not owned by user"}), 404
+
+    db.session.delete(bot)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "EmailBot deleted successfully",
+        "bot_id": bot_id
+    }), 200

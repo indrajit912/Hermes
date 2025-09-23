@@ -54,7 +54,7 @@ def create_user(name, email, admin):
             click.echo("❌ User with this email already exists")
             return
 
-        plain_key = str(uuid.uuid4())
+        plain_key = str(uuid.uuid4().hex)
         user = User(
             name=name,
             email=email,

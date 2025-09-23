@@ -1,8 +1,8 @@
 import uuid
 from flask import Blueprint, request, jsonify
 from app.extensions import db
-from app.models import User, EmailBot
-from app.utils.auth import get_current_user, require_api_key
+from app.models import User, EmailBot, Log
+from app.utils.auth import get_current_user, require_api_key, log_request
 from app.utils.mailer import send_email
 
 
@@ -101,6 +101,7 @@ def register():
 # -------------------------
 @user_bp.route("/me", methods=["GET"])
 @require_api_key
+@log_request
 def get_profile():
     """
     Get current authenticated user profile.
@@ -134,7 +135,8 @@ def get_profile():
             "id": user.id,
             "name": user.name,
             "email": user.email,
-            "api_key_approved": user.api_key_approved
+            "api_key_approved": user.api_key_approved,
+            "date_joined": user.date_joined_iso
         }
     })
 
@@ -144,6 +146,7 @@ def get_profile():
 # -------------------------
 @user_bp.route("/apikey/rotate", methods=["POST"])
 @require_api_key
+@log_request
 def rotate_api_key():
     """
     Rotate the user's API key (invalidate old one, issue new).
@@ -183,6 +186,7 @@ def rotate_api_key():
 # -------------------------
 @user_bp.route("/emailbot", methods=["POST"])
 @require_api_key
+@log_request
 def add_email_bot():
     """
     Add a new EmailBot for the authenticated user.
@@ -257,6 +261,7 @@ def add_email_bot():
 # -------------------------
 @user_bp.route("/emailbot", methods=["GET"])
 @require_api_key
+@log_request
 def list_email_bots():
     """
     List all EmailBots of the authenticated user.
@@ -301,7 +306,8 @@ def list_email_bots():
         "username": bot.username,
         "email": bot.email,  # decrypted automatically
         "smtp_server": bot.smtp_server,
-        "smtp_port": bot.smtp_port
+        "smtp_port": bot.smtp_port,
+        "date_created": bot.date_created_iso,
     } for bot in bots]
 
     return jsonify({"success": True, "bots": bot_list})
@@ -312,6 +318,7 @@ def list_email_bots():
 # -------------------------
 @user_bp.route("/emailbot/<bot_id>", methods=["PUT"])
 @require_api_key
+@log_request
 def update_email_bot(bot_id):
     """
     Update an existing EmailBot of the authenticated user.
@@ -383,6 +390,7 @@ def update_email_bot(bot_id):
 # -------------------------
 @user_bp.route("/emailbot/<bot_id>", methods=["DELETE"])
 @require_api_key
+@log_request
 def delete_email_bot(bot_id):
     """
     Delete an EmailBot owned by the authenticated user.
@@ -429,3 +437,66 @@ def delete_email_bot(bot_id):
         "message": "EmailBot deleted successfully",
         "bot_id": bot_id
     }), 200
+
+
+
+# -------------------------
+# USER ACTIVITY LOGS
+# -------------------------
+@user_bp.route("/logs", methods=["GET"])
+@require_api_key
+@log_request
+def get_logs():
+    """
+    Fetch recent API activity logs for the authenticated user.
+
+    Endpoint: GET /api/v1/logs
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Query Params:
+    -------------
+    - limit: Number of logs to fetch (default: 20)
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "logs": [
+            {
+                "id": "<log_id>",
+                "endpoint": "/api/v1/emailbot",
+                "method": "POST",
+                "timestamp": "2025-09-23T12:34:56Z",
+                "status_code": 200
+            },
+            ...
+        ]
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    limit = int(request.args.get("limit", 20))
+
+    # Assuming you have a Log model with user_id, endpoint, method, timestamp, status_code
+    logs = (
+        Log.query.filter_by(user_id=user.id)
+        .order_by(Log.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+
+    log_list = [{
+        "id": log.id,
+        "endpoint": log.endpoint,
+        "method": log.method,
+        "timestamp": log.timestamp_iso,
+        "status_code": log.status_code
+    } for log in logs]
+
+    return jsonify({"success": True, "logs": log_list})

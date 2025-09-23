@@ -1,6 +1,7 @@
 from flask import request, current_app, jsonify
 from functools import wraps
-from app.models import User
+from app.models import User, Log
+from app.extensions import db
 
 def get_current_user():
     """
@@ -77,3 +78,24 @@ def require_api_key(f):
         return jsonify({"error": "Invalid API key"}), 403
 
     return decorated
+
+def log_request(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        try:
+            user = get_current_user()
+            if user:
+                log_entry = Log(
+                    user_id=user.id,
+                    endpoint=request.path,
+                    method=request.method,
+                    status_code=response[1] if isinstance(response, tuple) else 200
+                )
+                db.session.add(log_entry)
+                db.session.commit()
+        except Exception as e:
+            # don't break API if logging fails
+            print(f"Failed to log request: {e}")
+        return response
+    return wrapper

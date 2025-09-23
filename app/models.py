@@ -1,9 +1,10 @@
 # models.py
 
 import uuid
-from datetime import datetime
+from datetime import timezone
 from app.extensions import db
 from app.utils.crypto import encrypt_value, decrypt_value
+from scripts.utils import utcnow
 
 class User(db.Model):
     __tablename__ = "user"
@@ -17,6 +18,8 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     api_key_approved = db.Column(db.Boolean, default=False)
 
+    date_joined = db.Column(db.DateTime(timezone=True), default=utcnow)
+
     # Cascade delete: remove all associated EmailBots when this user is deleted
     email_bots = db.relationship(
         "EmailBot",
@@ -27,6 +30,15 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.email}>"
+    
+    @property
+    def date_joined_iso(self):
+        """
+        Return the date_joined in ISO 8601 format with timezone info.
+        """
+        if self.date_joined:
+            return self.date_joined.astimezone(timezone.utc).isoformat()
+        return None
 
     # --------- API Key (Encrypted) ------------
     @property
@@ -87,11 +99,22 @@ class EmailBot(db.Model):
     smtp_server = db.Column(db.String(128), nullable=False, default="smtp.gmail.com")
     smtp_port = db.Column(db.Integer, nullable=False, default=587)
 
+    date_created = db.Column(db.DateTime(timezone=True), default=utcnow)
+
     # Relationship to user
     user = db.relationship("User", back_populates="email_bots")
 
     def __repr__(self):
         return f"<EmailBot {self.username or self.email}>"
+    
+    @property
+    def date_created_iso(self):
+        """
+        Return the date_created in ISO 8601 format with timezone info.
+        """
+        if self.date_created:
+            return self.date_created.astimezone(timezone.utc).isoformat()
+        return None
 
     @property
     def email(self):
@@ -126,14 +149,26 @@ class Log(db.Model):
     __tablename__ = "log"
 
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4().hex))
-    user_id = db.Column(db.String, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     endpoint = db.Column(db.String(256), nullable=False)
     method = db.Column(db.String(10), nullable=False)
     status_code = db.Column(db.Integer, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
 
-    # Relationship to user
-    user = db.relationship("User", backref=db.backref("logs", lazy=True))
+    # Relationship to user with cascade delete
+    user = db.relationship(
+        "User",
+        backref=db.backref("logs", lazy=True, cascade="all, delete-orphan")
+    )
 
     def __repr__(self):
         return f"<Log {self.method} {self.endpoint} by {self.user_id} at {self.timestamp}>"
+    
+    @property
+    def timestamp_iso(self):
+        """
+        Return the timestamp in ISO 8601 format with timezone info.
+        """
+        if self.timestamp:
+            return self.timestamp.astimezone(timezone.utc).isoformat()
+        return None

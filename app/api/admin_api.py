@@ -3,6 +3,7 @@ from app.models import User
 from app.extensions import db
 from app.utils.auth import admin_only
 from app.utils.mailer import send_email
+import logging
 
 admin_bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
@@ -10,77 +11,17 @@ admin_bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 @admin_bp.route("/approve-user/<user_id>", methods=["POST"])
 @admin_only
 def approve_user(user_id):
-    """
-    Approve a pending user (admin-only).
-
-    Endpoint:
-    ---------
-    POST /api/v1/admin/approve-user/<user_id>
-
-    Headers:
-    --------
-    - Authorization: Bearer <Admin user's personal API key>
-      OR
-    - X-STATIC-KEY: <Hermes static API key>
-
-    Description:
-    ------------
-    Admins can approve a new user’s account and assign a new API key using this endpoint. 
-    Once approved, the API key will be encrypted automatically by the User model and returned
-    in plaintext **only once**. After this response, the plaintext key will not
-    be retrievable again.
-
-    URL Parameters:
-    ---------------
-    - user_id: ID of the user to approve.
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "user_id": "<user_id>",
-        "api_key": "<plaintext API key for one-time use>"
-    }
-
-    Response (Errors):
-    ------------------
-    Status Code: 404
-    {
-        "error": "User not found"
-    }
-
-    Status Code: 200
-    {
-        "message": "User already approved"
-    }
-
-    Status Code: 400
-    {
-        "error": "No pending API key found for this user"
-    }
-
-    Status Code: 403
-    {
-        "error": "Admin access required"
-    }
-
-    Example CURL:
-    -------------
-    # Using Bearer token (admin personal API key)
-    curl -X POST http://localhost:5000/api/v1/admin/approve-user/<user_id> \
-        -H "Authorization: Bearer <admin_api_key>"
-
-    # Using Hermes static key
-    curl -X POST http://localhost:5000/api/v1/admin/approve-user/<user_id> \
-        -H "X-STATIC-KEY: <hermes_static_key>"
-    """
+    logger = logging.getLogger("hermes")
+    logger.info(f"Admin attempting to approve user {user_id}")
     user = User.query.get(user_id)
     if not user:
+        logger.warning(f"User not found for approval: {user_id}")
         return jsonify({"error": "User not found"}), 404
     if user.api_key_approved:
+        logger.info(f"User {user_id} already approved")
         return jsonify({"message": "User already approved"}), 200
     if not user.api_key_plain:
+        logger.warning(f"No pending API key for user {user_id}")
         return jsonify({"error": "No pending API key found for this user"}), 400
 
     # Use the property setter to encrypt automatically
@@ -101,6 +42,7 @@ def approve_user(user_id):
         }
     )
 
+    logger.info(f"User {user_id} approved successfully")
     return jsonify({
         "success": True,
         "user_id": user.id,

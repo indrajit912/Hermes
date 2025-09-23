@@ -1,4 +1,5 @@
 import uuid
+import logging
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import User, EmailBot, Log
@@ -11,6 +12,8 @@ user_bp = Blueprint("user_api", __name__, url_prefix="/api/v1")
 
 @user_bp.route("/register", methods=["POST"])
 def register():
+    logger = logging.getLogger("hermes")
+    logger.info(f"Register API called for email: {request.json.get('email')}")
     """
     Request a personal API key for Hermes.
 
@@ -52,16 +55,20 @@ def register():
     name, email = data.get("name"), data.get("email")
 
     if not name or not email:
+        logger.warning("Name and email required for registration")
         return jsonify({"error": "Name and email required"}), 400
 
     existing = User.query.filter_by(email=email).first()
     if existing:
+        logger.warning(f"User already exists: {email}")
         return jsonify({"error": "User already exists"}), 400
 
     plain_key = str(uuid.uuid4().hex)
     user = User(name=name, email=email, api_key_plain=plain_key)
     db.session.add(user)
     db.session.commit()
+
+    logger.info(f"User registered: {email}")
 
     # Send email to the admin for approval
     # get all approved admins
@@ -249,6 +256,8 @@ def add_email_bot():
     db.session.add(bot)
     db.session.commit()
 
+    logging.info(f"EmailBot added: {bot.id} for user: {user.id}")
+
     return jsonify({
         "success": True,
         "message": "EmailBot added successfully",
@@ -309,6 +318,8 @@ def list_email_bots():
         "smtp_port": bot.smtp_port,
         "date_created": bot.date_created_iso,
     } for bot in bots]
+
+    logging.info(f"Fetched EmailBots for user: {user.id}, count: {len(bot_list)}")
 
     return jsonify({"success": True, "bots": bot_list})
 
@@ -378,6 +389,8 @@ def update_email_bot(bot_id):
 
     db.session.commit()
 
+    logging.info(f"EmailBot updated: {bot.id} for user: {user.id}")
+
     return jsonify({
         "success": True,
         "message": "EmailBot updated successfully",
@@ -431,6 +444,8 @@ def delete_email_bot(bot_id):
 
     db.session.delete(bot)
     db.session.commit()
+
+    logging.info(f"EmailBot deleted: {bot_id} for user: {user.id}")
 
     return jsonify({
         "success": True,
@@ -498,5 +513,7 @@ def get_logs():
         "timestamp": log.timestamp_iso,
         "status_code": log.status_code
     } for log in logs]
+
+    logging.info(f"Fetched logs for user: {user.id}, count: {len(log_list)}")
 
     return jsonify({"success": True, "logs": log_list})

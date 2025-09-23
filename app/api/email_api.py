@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import EmailBot
 from app.utils.email_message import EmailMessage
 from app.utils.auth import get_current_user, require_api_key
+import logging
 
 email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 
@@ -9,53 +10,12 @@ email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 @email_bp.route("/send-email", methods=["POST"])
 @require_api_key
 def send_email():
-    """
-    Send an email using a specified EmailBot or the default Hermes bot.
-
-    Endpoint: POST /api/v1/send-email
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    Request JSON:
-    -------------
-    {
-        "bot_id": "<optional: EmailBot ID to use>",    # optional
-        "from_name": "Indrajit's Bot",
-        "to": ["recipient1@example.com"],
-        "subject": "Email Subject",
-        "email_plain_text": "Plain text body",
-        "email_html_text": "<p>HTML body</p>",
-        "cc": ["cc@example.com"],                      # optional
-        "bcc": ["bcc@example.com"],                    # optional
-        "attachments": ["path/to/file.pdf"]           # optional
-    }
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "message": "Email sent"
-    }
-
-    Response (Errors):
-    ------------------
-    Status Code: 400
-    {
-        "error": "Invalid bot ID or bot does not belong to user"
-    }
-
-    Status Code: 500
-    {
-        "success": False,
-        "error": "<Error message>"
-    }
-    """
+    logger = logging.getLogger("hermes")
+    logger.info(f"Send email request received from user: {get_current_user().email if get_current_user() else 'Unknown'}")
     data = request.json
     user = get_current_user()
     if not user:
+        logger.warning("User not found for send-email API call")
         return jsonify({"error": "User not found"}), 400
 
     bot_id = data.get("bot_id")
@@ -63,6 +23,7 @@ def send_email():
         # Use specified EmailBot
         bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
         if not bot:
+            logger.warning(f"Invalid bot ID {bot_id} or bot does not belong to user")
             return jsonify({"error": "Invalid bot ID or bot does not belong to user"}), 400
 
         sender_email = bot.email       # decrypted automatically
@@ -92,7 +53,10 @@ def send_email():
         msg.send(
             sender_email_password=sender_password,
             server_info=(smtp_server, smtp_port),
+            print_success_status=False
         )
+        logger.info(f"Email sent successfully to {data['to']}")
         return jsonify({"success": True, "message": "Email sent"})
     except Exception as e:
+        logger.error(f"Error sending email: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500

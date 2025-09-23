@@ -1,0 +1,26 @@
+
+<!-- ROTATE API KEY -->
+<div class="card mb-3 shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#rotate-apikey-collapse" role="button" aria-expanded="false" aria-controls="rotate-apikey-collapse">
+                🔑 POST /api/v1/apikey/rotate
+            </a>
+        </h5>
+    </div>
+    <div class="collapse" id="rotate-apikey-collapse">
+        <div class="card-body">
+            <p>Rotate your personal API key. Old key is invalidated immediately.</p>
+
+            <h6>🔑 Headers</h6>
+            <pre class="p-2 bg-light border rounded"><code>Authorization: Bearer &lt;User personal API key&gt;</code></pre>
+
+            <h6>✅ Response</h6>
+            <pre class="p-2 bg-light border rounded"><code>{
+  "success": true,
+  "message": "API key rotated successfully",
+  "new_api_key": "new-generated-key"
+}</code></pre>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<!-- LOGS -->
+<div class="card mb-3 shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#logs-collapse" role="button" aria-expanded="false" aria-controls="logs-collapse">
+                📜 GET /api/v1/logs
+            </a>
+        </h5>
+    </div>
+    <div class="collapse" id="logs-collapse">
+        <div class="card-body">
+            <p>Fetch your recent API activity logs. Supports <code>?limit=20</code> query parameter.</p>
+
+            <h6>🔑 Headers</h6>
+            <pre class="p-2 bg-light border rounded"><code>Authorization: Bearer &lt;User personal API key&gt;</code></pre>
+
+            <h6>✅ Response</h6>
+            <pre class="p-2 bg-light border rounded"><code>{
+  "success": true,
+  "logs": [
+    {
+      "id": "log-id",
+      "endpoint": "/api/v1/emailbot",
+      "method": "POST",
+      "timestamp": "2025-09-23T12:34:56Z",
+      "status_code": 200
+    }
+  ]
+}</code></pre>
+        </div>
+    </div>
+</div>

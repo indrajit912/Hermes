@@ -1,0 +1,80 @@
+
+<!-- Send Email Endpoint Section -->
+<div class="card mb-3 shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#send-email-collapse" role="button" aria-expanded="false" aria-controls="send-email-collapse">
+                📩 POST /api/v1/send-email
+            </a>
+        </h5>
+    </div>
+    <div class="collapse show" id="send-email-collapse">
+        <div class="card-body">
+            <p>Send an email using your personal API key or an EmailBot. Optional parameters allow CC, BCC, attachments, and customizing sender name.</p>
+
+            <h5>🔑 Headers</h5>
+            <pre class="p-2 bg-light border rounded"><code>Authorization: Bearer &lt;User personal API key&gt;
+Content-Type: application/json</code></pre>
+
+            <h5>📦 Request JSON</h5>
+            <pre class="p-2 bg-light border rounded"><code>{
+  "bot_id": "&lt;optional: EmailBot ID&gt;",
+  "from_name": "Indrajit's Bot",
+  "to": ["recipient1@example.com"],
+  "subject": "Email Subject",
+  "email_plain_text": "Plain text body",
+  "email_html_text": "&lt;p&gt;HTML body&lt;/p&gt;",
+  "cc": ["cc@example.com"],
+  "bcc": ["bcc@example.com"],
+  "attachments": ["path/to/file.pdf"]
+}</code></pre>
+
+            <h5>✅ Response (Success)</h5>
+            <pre class="p-2 bg-light border rounded"><code>{
+  "success": true,
+  "message": "Email sent"
+}</code></pre>
+
+            <h5>❌ Response (Errors)</h5>
+            <pre class="p-2 bg-light border rounded"><code>{
+  "error": "Invalid bot ID or bot does not belong to user"
+}
+{
+  "success": false,
+  "error": "&lt;Error message&gt;"
+}</code></pre>
+
+            <h5>💻 Example (Python)</h5>
+            <pre class="p-2 bg-light border rounded"><code class="language-python">
+import requests
+import json
+
+PERSONAL_API_KEY = "e520db06-d81e-4eb5-b1eb-70c3807e92b9"
+
+url = "http://localhost:8080/api/v1/send-email"
+
+payload = json.dumps({
+  "to": ["rs_math1902@isibang.ac.in"],
+  "from_name": "Kapoor's Cafe",
+  "subject": "Invitation to Cafe",
+  "email_plain_text": "Hello there!",
+  "email_html_text": "&lt;h1&gt;Hello there!&lt;/h1&gt;",
+  "cc": [],
+  "bcc": [],
+  "attachments": []
+})
+headers = {
+  'Content-Type': 'application/json',
+  'Authorization': f'Bearer {PERSONAL_API_KEY}'
+}
+
+response = requests.post(url, headers=headers, data=payload)
+print(response.text)
+            </code></pre>
+
+            <p class="mt-3 text-muted">
+                ⚡ More endpoints will be documented here soon.
+            </p>
+        </div>
+    </div>
+</div>

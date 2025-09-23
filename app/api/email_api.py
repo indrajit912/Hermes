@@ -1,8 +1,12 @@
+import os
+import base64
+import tempfile
+import logging
+
 from flask import Blueprint, request, jsonify, current_app
 from app.models import EmailBot
 from app.utils.email_message import EmailMessage
 from app.utils.auth import get_current_user, require_api_key
-import logging
 
 email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 
@@ -38,6 +42,21 @@ def send_email():
         smtp_server = current_app.config.get("BOT_MAIL_SERVER", "smtp.gmail.com")
         smtp_port = current_app.config.get("BOT_MAIL_PORT", 587)
 
+    # Handle attachments: decode base64 and save as temp files if needed
+    attachments = []
+    for att in data.get("attachments", []):
+        if isinstance(att, dict) and "filename" in att and "content" in att:
+            try:
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='_' + att["filename"])
+                temp_file.write(base64.b64decode(att["content"]))
+                temp_file.close()
+                attachments.append(temp_file.name)
+            except Exception as e:
+                logger.error(f"Failed to decode attachment {att.get('filename')}: {str(e)}")
+        else:
+            # Assume it's a file path
+            attachments.append(att)
+
     try:
         msg = EmailMessage(
             sender_email_id=sender_email,
@@ -47,7 +66,7 @@ def send_email():
             email_html_text=data.get("email_html_text"),
             cc=data.get("cc"),
             bcc=data.get("bcc"),
-            attachments=data.get("attachments"),
+            attachments=attachments,
             formataddr_text=data.get("from_name")
         )
         msg.send(
@@ -56,6 +75,13 @@ def send_email():
             print_success_status=False
         )
         logger.info(f"Email sent successfully to {data['to']}")
+        # Optionally: clean up temp files after sending
+        for f in attachments:
+            if isinstance(f, str) and os.path.exists(f):
+                try:
+                    os.remove(f)
+                except Exception:
+                    pass
         return jsonify({"success": True, "message": "Email sent"})
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")

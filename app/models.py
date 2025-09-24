@@ -17,6 +17,7 @@ class User(db.Model):
     api_key_plain_encrypted = db.Column(db.String(128), nullable=True)  # store plain only until approval
     is_admin = db.Column(db.Boolean, default=False)
     api_key_approved = db.Column(db.Boolean, default=False)
+    hermes_default_usage = db.Column(db.Integer, default=0)
 
     date_joined = db.Column(db.DateTime(timezone=True), default=utcnow)
 
@@ -40,6 +41,12 @@ class User(db.Model):
             return self.date_joined.astimezone(timezone.utc).isoformat()
         return None
 
+    @property
+    def email_bot_count(self):
+        """Return the total number of EmailBots owned by this user"""
+        return len(self.email_bots)
+    
+
     # --------- API Key (Encrypted) ------------
     @property
     def api_key(self):
@@ -62,6 +69,48 @@ class User(db.Model):
             self.api_key_encrypted = encrypt_value(value, key=fernet_key)
         else:
             self.api_key_encrypted = None
+
+    @property
+    def total_api_calls(self) -> int:
+        """Total API calls made by this user"""
+        return len(self.logs)  # uses backref relationship
+
+    def count_endpoint_usage(self, endpoint: str) -> int:
+        """Count number of calls to a specific endpoint"""
+        return sum(1 for log in self.logs if log.endpoint == endpoint)
+
+    @property
+    def send_email_usage(self) -> int:
+        """Number of times user has used the send-email API"""
+        return self.count_endpoint_usage("/api/v1/send-email")
+
+    @property
+    def last_activity(self):
+        """Timestamp of the last API call"""
+        if not self.logs:
+            return None
+        return max(log.timestamp for log in self.logs)
+
+    @property
+    def success_rate(self) -> float:
+        """Ratio of successful (200) responses"""
+        total = len(self.logs)
+        if total == 0:
+            return 0.0
+        successes = sum(1 for log in self.logs if log.status_code == 200)
+        return successes / total
+
+    def usage_summary(self) -> dict:
+        """Return a dictionary of all relevant usage stats"""
+        return {
+            "total_api_calls": self.total_api_calls,
+            "send_email_calls": self.send_email_usage,
+            "last_activity": (
+                self.last_activity.astimezone(timezone.utc).isoformat()
+                if self.last_activity else None
+            ),
+            "success_rate": round(self.success_rate, 2),
+        }
 
 
     # --------- API Key Plain (Encrypted) ------------

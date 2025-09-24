@@ -1,16 +1,11 @@
-import os
+# app/utils/crypto.py
 from cryptography.fernet import Fernet
-from dotenv import load_dotenv
+from config import Config
 
-load_dotenv()
-
-FERNET_KEY = os.getenv("FERNET_KEY")
-if not FERNET_KEY:
-    raise ValueError("FERNET_KEY not found in .env")
+FERNET_KEY = Config.FERNET_KEY
 
 # Default cipher object
 cipher = Fernet(FERNET_KEY.encode())
-
 
 def encrypt_value(value: str, key: str = None):
     """

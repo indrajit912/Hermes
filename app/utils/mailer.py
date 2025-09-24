@@ -1,13 +1,13 @@
-import os
+# app/utils/mailer.py
 from app.utils.email_message import EmailMessage
 from flask import render_template
 from typing import List, Optional, Union
+from config import Config
 
-BOT_EMAIL = os.getenv("BOT_EMAIL")
-BOT_PASSWORD = os.getenv("BOT_PASSWORD")
-SMTP_SERVER = os.getenv("BOT_SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("BOT_SMTP_PORT", 587))
-
+BOT_EMAIL = Config.BOT_EMAIL
+BOT_PASSWORD = Config.BOT_PASSWORD
+SMTP_SERVER = Config.BOT_MAIL_SERVER
+SMTP_PORT = Config.BOT_MAIL_PORT
 
 def send_email(
     to: Union[str, List[str]],

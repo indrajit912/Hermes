@@ -5,6 +5,8 @@ import logging
 
 from flask import Blueprint, request, jsonify, current_app
 from app.models import EmailBot
+from app.extensions import db
+from config import Config
 from app.utils.email_message import EmailMessage
 from app.utils.auth import get_current_user, require_api_key, log_request
 
@@ -87,17 +89,37 @@ def send_email():
 
     bot_id = data.get("bot_id")
     if bot_id:
+        # --- using user’s own bot ---
         bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
         if not bot:
             logger.warning(f"Send-email failed: Invalid bot_id={bot_id} for user_id={user.id}")
             return jsonify({"error": "Invalid bot ID or bot does not belong to user"}), 400
 
-        sender_email = bot.email       # decrypted automatically
-        sender_password = bot.password # decrypted automatically
+        sender_email = bot.email
+        sender_password = bot.password
         smtp_server = bot.smtp_server
         smtp_port = bot.smtp_port
         logger.info(f"Using user-owned EmailBot (id={bot.id}) for user_id={user.id}")
     else:
+        # --- using default Hermes bot ---
+        if user.hermes_default_usage >= Config.HERMES_DEFAULT_BOT_LIMIT:
+            logger.warning(
+                f"User {user.id} exceeded Hermes default bot usage "
+                f"(limit={Config.HERMES_DEFAULT_BOT_LIMIT})"
+            )
+            return jsonify({
+                "error": "Default Hermes bot usage limit exceeded. "
+                         "Please create your own EmailBot.",
+                "docs": f"{Config.HERMES_HOMEPAGE}/docs"
+            }), 403
+
+        user.hermes_default_usage += 1
+        db.session.commit()
+        logger.info(
+            f"User {user.id} used Hermes default bot "
+            f"({user.hermes_default_usage}/{Config.HERMES_DEFAULT_BOT_LIMIT})"
+        )
+
         sender_email = current_app.config.get("BOT_EMAIL")
         sender_password = current_app.config.get("BOT_PASSWORD")
         smtp_server = current_app.config.get("BOT_MAIL_SERVER", "smtp.gmail.com")
@@ -171,7 +193,20 @@ def send_email():
                 except Exception as e:
                     logger.warning(f"Failed to delete temp file {f}: {e}")
 
-        return jsonify({"success": True, "message": "Email sent"})
+        response_data = {"success": True, "message": "Email sent"}
+
+        # If Hermes default bot was used, include usage info
+        if not bot_id:
+            remaining = Config.HERMES_DEFAULT_BOT_LIMIT - user.hermes_default_usage
+            response_data["hermes_default_usage"] = {
+                "used": user.hermes_default_usage,
+                "remaining": max(remaining, 0),
+                "limit": Config.HERMES_DEFAULT_BOT_LIMIT,
+                "docs": f"{Config.HERMES_HOMEPAGE}/docs"
+            }
+
+        return jsonify(response_data), 200
+    
     except Exception as e:
         logger.error(f"Email send failed for user_id={user.id}: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": str(e)}), 500

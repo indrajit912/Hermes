@@ -40,6 +40,7 @@ from cryptography.fernet import Fernet
 from app import create_app
 from app.extensions import db
 from app.models import User
+from config import Config
 
 app = create_app()
 
@@ -126,7 +127,7 @@ def approve_user(email):
             template_context={
                 "name": user.name, 
                 "api_key": user.api_key, 
-                "homepage_url": "hermes.com"
+                "hermes_homepage": Config.HERMES_HOMEPAGE
             }
         )
         if success:

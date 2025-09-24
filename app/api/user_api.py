@@ -5,6 +5,7 @@ from app.extensions import db
 from app.models import User, EmailBot, Log
 from app.utils.auth import get_current_user, require_api_key, log_request
 from app.utils.mailer import send_email
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,19 @@ def get_profile():
             "id": "<user_id>",
             "name": "Alice Example",
             "email": "alice@example.com",
-            "api_key_approved": true
+            "api_key_approved": true,
+            "date_joined": "...",
+            "usage": {
+                "total_api_calls": 45,
+                "send_email_calls": 12,
+                "last_activity": "2025-09-23T15:42:01+00:00",
+                "success_rate": 0.91
+            },
+            "hermes_default_bot": {
+                "usage": 3,
+                "limit": 5,
+                "exceeded": false
+            }
         }
     }
     """
@@ -141,6 +154,9 @@ def get_profile():
 
     logger.info(f"User profile retrieved successfully for user_id={user.id}, email={user.email}")
 
+    hermes_limit = getattr(Config, "HERMES_DEFAULT_BOT_LIMIT", 5)
+    hermes_usage = user.hermes_default_usage or 0
+
     return jsonify({
         "success": True,
         "user": {
@@ -148,9 +164,17 @@ def get_profile():
             "name": user.name,
             "email": user.email,
             "api_key_approved": user.api_key_approved,
-            "date_joined": user.date_joined_iso
+            "date_joined": user.date_joined_iso,
+            "email_bot_count": user.email_bot_count,
+            "usage": user.usage_summary(),
+            "hermes_default_bot": {
+                "usage": hermes_usage,
+                "limit": hermes_limit,
+                "exceeded": hermes_usage >= hermes_limit
+            }
         }
     }), 200
+
 
 # -------------------------
 # ROTATE API KEY
@@ -271,21 +295,32 @@ def add_email_bot():
 # -------------------------
 # LIST EMAIL BOTS
 # -------------------------
-@user_bp.route("/emailbot", methods=["GET"])
+@user_bp.route("/emailbots", methods=["GET"])
+@user_bp.route("/emailbots/<bot_id>", methods=["GET"])
 @require_api_key
 @log_request
-def list_email_bots():
+def list_email_bots(bot_id=None):
     """
-    List all EmailBots of the authenticated user.
+    List all EmailBots of the authenticated user, or a specific EmailBot if bot_id is provided.
 
-    Endpoint: GET /api/v1/emailbot
+    Endpoint:
+    ---------
+    GET /api/v1/emailbots              → returns all EmailBots of the user
+    GET /api/v1/emailbots/<bot_id>     → returns a single EmailBot by ID
 
     Headers:
     --------
     - Authorization: Bearer <User personal API key>
 
+    Description:
+    ------------
+    Authenticated users can retrieve their EmailBots. If no bot_id is provided, all EmailBots
+    associated with the user are returned. If bot_id is provided, details of that specific bot
+    are returned.
+
     Response (Success):
     -------------------
+    # For all EmailBots
     Status Code: 200
     {
         "success": True,
@@ -295,10 +330,25 @@ def list_email_bots():
                 "username": "AliceBot",
                 "email": "alicebot@gmail.com",
                 "smtp_server": "smtp.gmail.com",
-                "smtp_port": 587
+                "smtp_port": 587,
+                "date_created": "2025-09-24T12:34:56Z"
             },
             ...
         ]
+    }
+
+    # For a single EmailBot
+    Status Code: 200
+    {
+        "success": True,
+        "bot": {
+            "bot_id": "<bot_id>",
+            "username": "AliceBot",
+            "email": "alicebot@gmail.com",
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "date_created": "2025-09-24T12:34:56Z"
+        }
     }
 
     Response (Errors):
@@ -307,37 +357,64 @@ def list_email_bots():
     {
         "error": "User not found"
     }
+
+    Status Code: 404
+    {
+        "error": "EmailBot not found or not owned by user"
+    }
+
+    Notes:
+    ------
+    - Email and password fields are decrypted automatically before returning.
+    - Only the owner of the EmailBot can view its details.
     """
+
     user = get_current_user()
     if not user:
         return jsonify({"error": "User not found"}), 400
+    
+    if bot_id:
+        bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
+        if not bot:
+            return jsonify({"error": "EmailBot not found or not owned by user"}), 404
+        bot_data = {
+            "bot_id": bot.id,
+            "username": bot.username,
+            "email": bot.email,  # decrypted automatically
+            "smtp_server": bot.smtp_server,
+            "smtp_port": bot.smtp_port,
+            "date_created": bot.date_created_iso,
+        }
+        return jsonify({"success": True, "bot": bot_data})
+    else:
+        logging.debug(f"Listing all EmailBots for user: {user.id}") 
 
-    bots = EmailBot.query.filter_by(user_id=user.id).all()
-    bot_list = [{
-        "bot_id": bot.id,
-        "username": bot.username,
-        "email": bot.email,  # decrypted automatically
-        "smtp_server": bot.smtp_server,
-        "smtp_port": bot.smtp_port,
-        "date_created": bot.date_created_iso,
-    } for bot in bots]
+        bots = EmailBot.query.filter_by(user_id=user.id).all()
+        bot_list = [{
+            "bot_id": bot.id,
+            "username": bot.username,
+            "email": bot.email,  # decrypted automatically
+            "smtp_server": bot.smtp_server,
+            "smtp_port": bot.smtp_port,
+            "date_created": bot.date_created_iso,
+        } for bot in bots]
 
-    logging.info(f"Fetched EmailBots for user: {user.id}, count: {len(bot_list)}")
+        logging.info(f"Fetched EmailBots for user: {user.id}, count: {len(bot_list)}")
 
-    return jsonify({"success": True, "bots": bot_list})
+        return jsonify({"success": True, "bots": bot_list})
 
 
 # -------------------------
 # UPDATE EMAIL BOT
 # -------------------------
-@user_bp.route("/emailbot/<bot_id>", methods=["PUT"])
+@user_bp.route("/emailbots/<bot_id>", methods=["PUT"])
 @require_api_key
 @log_request
 def update_email_bot(bot_id):
     """
     Update an existing EmailBot of the authenticated user.
     """
-    logger.debug(f"Handling PUT /api/v1/emailbot/{bot_id} request")
+    logger.debug(f"Handling PUT /api/v1/emailbots/{bot_id} request")
 
     user = get_current_user()
     if not user:
@@ -377,14 +454,14 @@ def update_email_bot(bot_id):
 # -------------------------
 # DELETE EMAIL BOT
 # -------------------------
-@user_bp.route("/emailbot/<bot_id>", methods=["DELETE"])
+@user_bp.route("/emailbots/<bot_id>", methods=["DELETE"])
 @require_api_key
 @log_request
 def delete_email_bot(bot_id):
     """
     Delete an EmailBot owned by the authenticated user.
     """
-    logger.debug(f"Handling DELETE /api/v1/emailbot/{bot_id} request")
+    logger.debug(f"Handling DELETE /api/v1/emailbots/{bot_id} request")
 
     user = get_current_user()
     if not user:

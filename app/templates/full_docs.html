@@ -171,16 +171,21 @@ print(resp.json())
         </div>
       </section>
       <!-- Send Email API -->
-      <section id="email" class="mb-5">
-        <h2 class="h4 text-primary mb-3">Send Email API</h2>
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">Send Email</h5>
-            <p>Send an email using your API key.<br>
-  <span class="text-info">By default, emails are sent from the default Hermes bot email address. To use your own custom EmailBot, first add an EmailBot to your account, then pass its <code>bot_id</code> in this API call.</span>
-</p>
-            <span class="badge bg-primary">POST /api/v1/send-email</span>
-            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
+<section id="email" class="mb-5">
+  <h2 class="h4 text-primary mb-3">Send Email API</h2>
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Send Email</h5>
+      <p>Send an email using your API key.<br>
+        <span class="text-info">
+          By default, emails are sent from the default Hermes bot email address. 
+          Each user can use the default Hermes bot up to <code>{{ hermes_default_bot_limit }}</code> times. 
+          Once this limit is reached, you must create your own custom EmailBot to continue sending emails. 
+          To use a custom bot, add an EmailBot to your account and pass its <code>bot_id</code> in this API call.
+        </span>
+      </p>
+      <span class="badge bg-primary">POST /api/v1/send-email</span>
+      <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
 {
   <span class="text-danger">"to"</span>: [<span class="text-success">"recipient@example.com"</span>],
   <span class="text-danger">"subject"</span>: <span class="text-success">"Hello from Hermes"</span>,
@@ -195,16 +200,17 @@ print(resp.json())
     {<span class="text-danger">"filename"</span>: <span class="text-success">"image.png"</span>, <span class="text-danger">"content"</span>: <span class="text-info">"base64-encoded-content"</span>}
   ]
 }</code></pre>
-            <div class="accordion" id="sendEmailAccordion">
-              <div class="accordion-item">
-                <h2 class="accordion-header" id="sendEmailPython">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sendEmailPythonCode" aria-expanded="false" aria-controls="sendEmailPythonCode">
-                    Example Python (requests)
-                  </button>
-                </h2>
-                <div id="sendEmailPythonCode" class="accordion-collapse collapse" aria-labelledby="sendEmailPython" data-bs-parent="#sendEmailAccordion">
-                  <div class="accordion-body">
-                    <pre class="bg-light p-2 rounded"><code>import requests
+
+      <div class="accordion" id="sendEmailAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="sendEmailPython">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sendEmailPythonCode" aria-expanded="false" aria-controls="sendEmailPythonCode">
+              Example Python (requests)
+            </button>
+          </h2>
+          <div id="sendEmailPythonCode" class="accordion-collapse collapse" aria-labelledby="sendEmailPython" data-bs-parent="#sendEmailAccordion">
+            <div class="accordion-body">
+              <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
 data = {
@@ -217,13 +223,45 @@ data = {
 resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
 </code></pre>
-                  </div>
-                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Developer Note -->
+      <div class="mt-3">
+        <h6>Note for Developers:</h6>
+        <p>
+          If you want programmatic usage of this API in your own Python code, you can use the ready-made function <code>send_email_via_hermes</code> provided in <code>scripts/send_email_client.py</code> (see <a href="{{ hermes_github_repo }}" target="_blank" rel="noopener noreferrer">here</a>
+). 
+          It uses the Python <code>requests</code> module and simplifies sending emails via this endpoint.
+        </p>
+
+        <div class="accordion" id="sendEmailClientAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="sendEmailClientHeader">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sendEmailClientCode" aria-expanded="false" aria-controls="sendEmailClientCode">
+                Show Python Helper Function
+              </button>
+            </h2>
+            <div id="sendEmailClientCode" class="accordion-collapse collapse" aria-labelledby="sendEmailClientHeader" data-bs-parent="#sendEmailClientAccordion">
+              <div class="accordion-body position-relative">
+                <!-- Copy button -->
+                <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2" onclick="copyCode(this)">
+                  <i class="bi bi-clipboard"></i> Copy
+                </button>
+              
+                <pre class="bg-light p-2 rounded"><code>{{ email_client_code }}</code></pre>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+
+    </div>
+  </div>
+</section>
+
       <!-- EmailBot APIs -->
       <section id="emailbot" class="mb-5">
         <h2 class="h4 text-warning mb-3">EmailBot APIs</h2>
@@ -271,7 +309,8 @@ print(resp.json())
         <div class="card mb-3 shadow-sm">
           <div class="card-body">
             <h5 class="card-title">List EmailBots</h5>
-            <span class="badge bg-warning text-dark">GET /api/v1/emailbot</span>
+            <span class="badge bg-warning text-dark">GET /api/v1/emailbots</span> <br>
+            <span class="badge bg-warning text-dark">GET /api/v1/emailbots/&lt;bot_id&gt;</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;</code></pre>
             <div class="accordion" id="listBotAccordion">
               <div class="accordion-item">
@@ -285,7 +324,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/emailbot", headers=headers)
+resp = requests.get("https://hermesbot.pythonanywhere.com/api/v1/emailbots", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -298,7 +337,7 @@ print(resp.json())
           <div class="card-body">
             <h5 class="card-title">Update EmailBot</h5>
             <p>Update an existing EmailBot's details.</p>
-            <span class="badge bg-warning text-dark">PUT /api/v1/emailbot/&lt;bot_id&gt;</span>
+            <span class="badge bg-warning text-dark">PUT /api/v1/emailbots/&lt;bot_id&gt;</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
 {
   <span class="text-danger">"username"</span>: <span class="text-success">"UpdatedBotName"</span>,
@@ -326,7 +365,7 @@ data = {
     "smtp_server": "smtp.outlook.com",
     "smtp_port": 465
 }
-resp = requests.put("https://hermesbot.pythonanywhere.com/api/v1/emailbot/BOT_ID", headers=headers, json=data)
+resp = requests.put("https://hermesbot.pythonanywhere.com/api/v1/emailbots/BOT_ID", headers=headers, json=data)
 print(resp.json())
 </code></pre>
                   </div>
@@ -339,7 +378,7 @@ print(resp.json())
           <div class="card-body">
             <h5 class="card-title">Delete EmailBot</h5>
             <p>Delete an EmailBot from your account.</p>
-            <span class="badge bg-warning text-dark">DELETE /api/v1/emailbot/&lt;bot_id&gt;</span>
+            <span class="badge bg-warning text-dark">DELETE /api/v1/emailbots/&lt;bot_id&gt;</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;</code></pre>
             <div class="accordion" id="deleteBotAccordion">
               <div class="accordion-item">
@@ -353,7 +392,7 @@ print(resp.json())
                     <pre class="bg-light p-2 rounded"><code>import requests
 
 headers = {"Authorization": "Bearer YOUR_API_KEY"}
-resp = requests.delete("https://hermesbot.pythonanywhere.com/api/v1/emailbot/BOT_ID", headers=headers)
+resp = requests.delete("https://hermesbot.pythonanywhere.com/api/v1/emailbots/BOT_ID", headers=headers)
 print(resp.json())
 </code></pre>
                   </div>
@@ -398,7 +437,8 @@ print(resp.json())
           <div class="card-body">
             <h5 class="card-title">List Users</h5>
             <p>List all registered users (admin-only).</p>
-            <span class="badge bg-danger">GET /api/v1/admin/list-users</span>
+            <span class="badge bg-danger">GET /api/v1/admin/users</span><br>
+            <span class="badge bg-danger">GET /api/v1/admin/users/&lt;user_id&gt;</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;ADMIN_API_KEY&gt; or X-STATIC-KEY: &lt;Hermes static API key&gt;</code></pre>
             <div class="accordion" id="listUsersAccordion">
               <div class="accordion-item">
@@ -452,4 +492,24 @@ print(resp.json())
     </div>
   </div>
 </div>
+
+<script>
+function copyCode(button) {
+  // Find the <code> element within the same accordion-body
+  const codeBlock = button.closest('.accordion-body').querySelector('code');
+  if (!codeBlock) return;
+
+  // Copy text to clipboard
+  navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+    // Provide feedback
+    button.innerHTML = '<i class="bi bi-check-lg"></i> Copied';
+    setTimeout(() => {
+      button.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+    }, 1500);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+  });
+}
+</script>
+
 {% endblock %}

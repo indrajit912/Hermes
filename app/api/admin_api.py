@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify
 
 from app.models import User
 from app.extensions import db
-from app.utils.auth import admin_only
+from app.utils.auth import admin_only, log_request
 from app.utils.mailer import send_email
 from config import Config
 
@@ -15,6 +15,7 @@ admin_bp = Blueprint("admin_api", __name__, url_prefix="/api/v1/admin")
 
 @admin_bp.route("/approve-user/<user_id>", methods=["POST"])
 @admin_only
+@log_request
 def approve_user(user_id):
     """
     Approve a user's API key request (admin-only).
@@ -129,6 +130,7 @@ def approve_user(user_id):
 
 @admin_bp.route("/list-users", methods=["GET"])
 @admin_only
+@log_request
 def list_users_admin():
     """
     List all registered users (admin-only).
@@ -215,6 +217,7 @@ def list_users_admin():
 
 @admin_bp.route("/delete-user/<user_id>", methods=["DELETE"])
 @admin_only
+@log_request
 def delete_user(user_id):
     """
     Delete a user (admin-only).

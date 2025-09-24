@@ -6,7 +6,7 @@ import logging
 from flask import Blueprint, request, jsonify, current_app
 from app.models import EmailBot
 from app.utils.email_message import EmailMessage
-from app.utils.auth import get_current_user, require_api_key
+from app.utils.auth import get_current_user, require_api_key, log_request
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,7 @@ email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 
 @email_bp.route("/send-email", methods=["POST"])
 @require_api_key
+@log_request
 def send_email():
     """
     Send an email using a specified or default bot.

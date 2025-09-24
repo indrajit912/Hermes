@@ -6,7 +6,7 @@ from app.models import User, EmailBot, Log
 from app.utils.auth import get_current_user, require_api_key, log_request
 from app.utils.mailer import send_email
 
-logger = logging.getLogger("hermes")
+logger = logging.getLogger(__name__)
 
 user_bp = Blueprint("user_api", __name__, url_prefix="/api/v1")
 
@@ -132,9 +132,14 @@ def get_profile():
         }
     }
     """
+    logger.debug("Handling GET /api/v1/me request")
+
     user = get_current_user()
     if not user:
+        logger.warning("GET /api/v1/me failed: no user found for provided API key")
         return jsonify({"error": "User not found"}), 400
+
+    logger.info(f"User profile retrieved successfully for user_id={user.id}, email={user.email}")
 
     return jsonify({
         "success": True,
@@ -145,124 +150,7 @@ def get_profile():
             "api_key_approved": user.api_key_approved,
             "date_joined": user.date_joined_iso
         }
-    })
-
-
-# -------------------------
-# ROTATE API KEY
-# -------------------------
-@user_bp.route("/apikey/rotate", methods=["POST"])
-@require_api_key
-@log_request
-def rotate_api_key():
-    """
-    Rotate the user's API key (invalidate old one, issue new).
-
-    Endpoint: POST /api/v1/apikey/rotate
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "message": "API key rotated successfully",
-        "new_api_key": "<new_api_key>"
-    }
-    """
-    user = get_current_user()
-    if not user:
-        return jsonify({"error": "User not found"}), 400
-
-    new_key = str(uuid.uuid4().hex)
-    user.api_key = new_key
-    db.session.commit()
-
-    return jsonify({
-        "success": True,
-        "message": "API key rotated successfully",
-        "new_api_key": new_key
-    })
-
-
-# -------------------------
-# ADD EMAIL BOT
-# -------------------------
-@user_bp.route("/emailbot", methods=["POST"])
-@require_api_key
-@log_request
-def add_email_bot():
-    """
-    Add a new EmailBot for the authenticated user.
-
-    Endpoint: POST /api/v1/emailbot
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    Request JSON:
-    -------------
-    {
-        "username": "AliceBot",             # optional friendly name
-        "email": "alicebot@gmail.com",      # bot email
-        "password": "app-password",         # bot app password
-        "smtp_server": "smtp.gmail.com",    # optional, default "smtp.gmail.com"
-        "smtp_port": 587                     # optional, default 587
-    }
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "message": "EmailBot added successfully",
-        "bot_id": "<newly_created_bot_id>"
-    }
-
-    Response (Errors):
-    ------------------
-    Status Code: 400
-    {
-        "error": "Missing email or password"
-    }
-    """
-    user = get_current_user()
-    if not user:
-        return jsonify({"error": "User not found"}), 400
-
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
-    username = data.get("username")
-    smtp_server = data.get("smtp_server", "smtp.gmail.com")
-    smtp_port = data.get("smtp_port", 587)
-
-    if not email or not password:
-        return jsonify({"error": "Missing email or password"}), 400
-
-    bot = EmailBot(
-        user_id=user.id,
-        username=username,
-        smtp_server=smtp_server,
-        smtp_port=smtp_port
-    )
-    bot.email = email       # encrypted automatically
-    bot.password = password # encrypted automatically
-
-    db.session.add(bot)
-    db.session.commit()
-
-    logging.info(f"EmailBot added: {bot.id} for user: {user.id}")
-
-    return jsonify({
-        "success": True,
-        "message": "EmailBot added successfully",
-        "bot_id": bot.id
-    })
+    }), 200
 
 
 # -------------------------
@@ -333,48 +221,21 @@ def list_email_bots():
 def update_email_bot(bot_id):
     """
     Update an existing EmailBot of the authenticated user.
-
-    Endpoint: PUT /api/v1/emailbot/<bot_id>
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    Request JSON (all fields optional, only send what you want to update):
-    ---------------------------------------------------------------------
-    {
-        "username": "UpdatedBotName",       # optional
-        "email": "updatedbot@gmail.com",    # optional
-        "password": "new-app-password",     # optional
-        "smtp_server": "smtp.outlook.com",  # optional
-        "smtp_port": 465                     # optional
-    }
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "message": "EmailBot updated successfully",
-        "bot_id": "<bot_id>"
-    }
-
-    Response (Errors):
-    ------------------
-    Status Code: 400
-    {
-        "error": "Bot not found"
-    }
     """
+    logger.debug(f"Handling PUT /api/v1/emailbot/{bot_id} request")
+
     user = get_current_user()
     if not user:
+        logger.warning("Update EmailBot failed: no user found for provided API key")
         return jsonify({"error": "User not found"}), 400
 
     bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
     if not bot:
+        logger.warning(f"Update EmailBot failed: bot_id={bot_id} not found for user_id={user.id}")
         return jsonify({"error": "Bot not found"}), 400
 
     data = request.json or {}
+    logger.debug(f"Update payload for bot_id={bot_id}: {data}")
 
     if "username" in data:
         bot.username = data["username"]
@@ -389,13 +250,13 @@ def update_email_bot(bot_id):
 
     db.session.commit()
 
-    logging.info(f"EmailBot updated: {bot.id} for user: {user.id}")
+    logger.info(f"EmailBot updated successfully: bot_id={bot.id} for user_id={user.id}, email={user.email}")
 
     return jsonify({
         "success": True,
         "message": "EmailBot updated successfully",
         "bot_id": bot.id
-    })
+    }), 200
 
 
 # -------------------------
@@ -407,52 +268,29 @@ def update_email_bot(bot_id):
 def delete_email_bot(bot_id):
     """
     Delete an EmailBot owned by the authenticated user.
-
-    Endpoint: DELETE /api/v1/emailbot/<bot_id>
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    URL Parameters:
-    ---------------
-    - bot_id: ID of the EmailBot to delete.
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "message": "EmailBot deleted successfully",
-        "bot_id": "<bot_id>"
-    }
-
-    Response (Errors):
-    ------------------
-    Status Code: 404
-    {
-        "error": "EmailBot not found or not owned by user"
-    }
     """
+    logger.debug(f"Handling DELETE /api/v1/emailbot/{bot_id} request")
+
     user = get_current_user()
     if not user:
+        logger.warning("Delete EmailBot failed: no user found for provided API key")
         return jsonify({"error": "User not found"}), 400
 
     bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
     if not bot:
+        logger.warning(f"Delete EmailBot failed: bot_id={bot_id} not found for user_id={user.id}")
         return jsonify({"error": "EmailBot not found or not owned by user"}), 404
 
     db.session.delete(bot)
     db.session.commit()
 
-    logging.info(f"EmailBot deleted: {bot_id} for user: {user.id}")
+    logger.info(f"EmailBot deleted successfully: bot_id={bot_id} for user_id={user.id}, email={user.email}")
 
     return jsonify({
         "success": True,
         "message": "EmailBot deleted successfully",
         "bot_id": bot_id
     }), 200
-
 
 
 # -------------------------
@@ -464,41 +302,17 @@ def delete_email_bot(bot_id):
 def get_logs():
     """
     Fetch recent API activity logs for the authenticated user.
-
-    Endpoint: GET /api/v1/logs
-
-    Headers:
-    --------
-    - Authorization: Bearer <User personal API key>
-
-    Query Params:
-    -------------
-    - limit: Number of logs to fetch (default: 20)
-
-    Response (Success):
-    -------------------
-    Status Code: 200
-    {
-        "success": True,
-        "logs": [
-            {
-                "id": "<log_id>",
-                "endpoint": "/api/v1/emailbot",
-                "method": "POST",
-                "timestamp": "2025-09-23T12:34:56Z",
-                "status_code": 200
-            },
-            ...
-        ]
-    }
     """
+    logger.debug("Handling GET /api/v1/logs request")
+
     user = get_current_user()
     if not user:
+        logger.warning("Fetch logs failed: no user found for provided API key")
         return jsonify({"error": "User not found"}), 400
 
     limit = int(request.args.get("limit", 20))
+    logger.debug(f"Fetching logs for user_id={user.id}, limit={limit}")
 
-    # Assuming you have a Log model with user_id, endpoint, method, timestamp, status_code
     logs = (
         Log.query.filter_by(user_id=user.id)
         .order_by(Log.timestamp.desc())
@@ -514,6 +328,6 @@ def get_logs():
         "status_code": log.status_code
     } for log in logs]
 
-    logging.info(f"Fetched logs for user: {user.id}, count: {len(log_list)}")
+    logger.info(f"Fetched {len(log_list)} logs for user_id={user.id}, email={user.email}")
 
-    return jsonify({"success": True, "logs": log_list})
+    return jsonify({"success": True, "logs": log_list}), 200

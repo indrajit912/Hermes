@@ -38,6 +38,7 @@ class EmailMessage(MIMEMultipart):
         `cc`: `str` / [`str`, `str`, ..., `str`]; (Carbon Copy)
         `bcc`: `str` / [`str`, `str`, ..., `str`]; (Blind Carbon Copy)
         `attachments` : `str` / [`str`, `str`, ..., `str`]; (Attachments)
+        `sdtdout_print` : `bool`; (If True, prints attachment type info to stdout)
 
     Returns:
     --------
@@ -54,7 +55,8 @@ class EmailMessage(MIMEMultipart):
         cc=None,
         bcc=None,
         attachments=None,
-        formataddr_text="Indrajit's Bot"
+        formataddr_text="Indrajit's Bot",
+        stdout_print=True
     ):
 
         cc = [] if cc is None else cc
@@ -114,24 +116,29 @@ class EmailMessage(MIMEMultipart):
 
             #this part is used to tell how the file should be read and stored (r, or rb, etc.)
             if main_type == 'text':
-                print("text attached")
+                if stdout_print:
+                    print("text attached")
                 temp = open(attached_file, 'r')  # 'rb' will send this error: 'bytes' object has no attribute 'encode'
                 attachment = MIMEText(temp.read(), _subtype=sub_type)
                 temp.close()
 
             elif main_type == 'image':
-                print("image attached")
+                if stdout_print:
+                    print("image attached")
                 temp = open(attached_file, 'rb')
                 attachment = MIMEImage(temp.read(), _subtype=sub_type)
                 temp.close()
 
             elif main_type == 'audio':
-                print("audio attached")
+                if stdout_print:
+                    print("audio attached")
                 temp = open(attached_file, 'rb')
                 attachment = MIMEAudio(temp.read(), _subtype=sub_type)
                 temp.close()            
 
-            elif main_type == 'application' and sub_type == 'pdf':   
+            elif main_type == 'application' and sub_type == 'pdf': 
+                if stdout_print:
+                    print("pdf attached")  
                 temp = open(attached_file, 'rb')
                 attachment = MIMEApplication(temp.read(), _subtype=sub_type)
                 temp.close()
@@ -149,6 +156,27 @@ class EmailMessage(MIMEMultipart):
 
 
     def send(self, sender_email_password, server_info=None, print_success_status=True):
+        """
+        Send the composed email message via SMTP.
+
+        Parameters:
+        -----------
+        sender_email_password : str
+            The password or app password for the sender's email account.
+        server_info : tuple (str, int)
+            Tuple containing the SMTP server address and port, e.g., ("smtp.gmail.com", 587).
+        print_success_status : bool, optional
+            If True, prints a success message after sending the email (default: True).
+
+        Returns:
+        --------
+        None
+
+        Raises:
+        -------
+        smtplib.SMTPException
+            If there is an error during the SMTP session, authentication, or sending.
+        """
         # creates SMTP session
         server_name, server_port = server_info
 

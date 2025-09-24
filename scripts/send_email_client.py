@@ -19,6 +19,7 @@ import requests
 from typing import List, Optional, Dict, Any
 
 
+
 def send_email_via_hermes(
     api_url: str,
     api_key: str,
@@ -72,7 +73,15 @@ def send_email_via_hermes(
     if bcc:
         payload["bcc"] = bcc
     if attachments:
-        payload["attachments"] = attachments
+        attachment_objs = []
+        for path in attachments:
+            with open(path, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode("utf-8")
+            attachment_objs.append({
+                "filename": os.path.basename(path),
+                "content": encoded
+            })
+        payload["attachments"] = attachment_objs
 
     response = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
     response.raise_for_status()

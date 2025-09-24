@@ -33,9 +33,10 @@ python -m scripts.cli rotate --api-secret-key
 # Generate new keys
 python -m scripts.cli generate-keys
 """
-
+import os
 import click
 import uuid
+from cryptography.fernet import Fernet
 from app import create_app
 from app.extensions import db
 from app.models import User
@@ -209,6 +210,9 @@ Hermes - cli.py
 Author: Indrajit Ghosh
 Created On: Sep 20, 2025
 
+# Initialize Hermes (generate keys)
+python -m scripts.cli init-hermes
+
 # Create a normal user
 python -m scripts.cli create --name "Alice" --email "alice@example.com"
 
@@ -233,9 +237,6 @@ python -m scripts.cli list-user
 # Rotate encryption keys
 python -m scripts.cli rotate --fernet-key
 python -m scripts.cli rotate --api-secret-key
-
-# Generate new keys
-python -m scripts.cli generate-keys
 """
     click.echo(examples)
 
@@ -257,13 +258,65 @@ def rotate_keys(fernet_key, api_secret_key):
     subprocess.run(args)
 
 # -------------------------
-# GENERATE KEYS
+# INIT HERMES (GENERATE KEYS)
 # -------------------------
-@cli.command("generate-keys")
-def generate_keys():
-    """Generate new keys using scripts/generate_keys.py"""
-    import subprocess
-    subprocess.run(["python", "scripts/generate_keys.py"])
+def generate_static_api_key():
+    return uuid.uuid4().hex  # 32 hex characters
+
+def generate_fernet_key():
+    return Fernet.generate_key().decode()  # base64-encoded string
+
+@cli.command("init-hermes")
+def init_hermes():
+    """
+    Generate new keys (FERNET_KEY + API_STATIC_KEY) in .env and add them.
+    If .env already has keys, they will be overwritten.
+    """
+
+    env_path = ".env"
+    if not os.path.exists(env_path):
+        click.echo("❌ .env file not found in current directory.")
+        return
+
+    # Read all lines from .env
+    with open(env_path, "r") as f:
+        lines = f.readlines()
+
+    # Prepare new keys
+    new_fernet_key = generate_fernet_key()
+    new_api_static_key = generate_static_api_key()
+
+    # Overwrite or add the keys
+    found_fernet = False
+    found_api_static = False
+    new_lines = []
+    for line in lines:
+        if line.startswith("FERNET_KEY="):
+            new_lines.append(f"FERNET_KEY={new_fernet_key}\n")
+            found_fernet = True
+        elif line.startswith("API_STATIC_KEY="):
+            new_lines.append(f"API_STATIC_KEY={new_api_static_key}\n")
+            found_api_static = True
+        else:
+            new_lines.append(line)
+
+    if not found_fernet:
+        new_lines.append(f"FERNET_KEY={new_fernet_key}\n")
+    if not found_api_static:
+        new_lines.append(f"API_STATIC_KEY={new_api_static_key}\n")
+
+    # Write back to .env
+    with open(env_path, "w") as f:
+        f.writelines(new_lines)
+
+    click.echo("✅ FERNET_KEY and API_STATIC_KEY have been generated and written to .env")
+    click.echo(f"FERNET_KEY={new_fernet_key}")
+    click.echo(f"API_STATIC_KEY={new_api_static_key}")
+
+    click.echo("\nNow do the following:")
+    click.echo("[-]ℹ️ Run: flask db upgrade")
+    click.echo("[-]ℹ️ Create an admin user using the 'create' command")
+    click.echo("[-]ℹ️ Approve the admin user using the 'approve' command")
 
 
 if __name__ == "__main__":

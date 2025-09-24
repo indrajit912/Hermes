@@ -250,7 +250,7 @@ python -m scripts.cli rotate --api-secret-key
 def rotate_keys(fernet_key, api_secret_key):
     """Rotate encryption keys using scripts/rotate_keys.py"""
     import subprocess
-    args = ["python", "scripts/rotate_keys.py"]
+    args = ["python", '-m', "scripts.rotate_keys"]
     if fernet_key:
         args.append("--fernet-key")
     if api_secret_key:

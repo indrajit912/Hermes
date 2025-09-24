@@ -18,6 +18,7 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     api_key_approved = db.Column(db.Boolean, default=False)
     hermes_default_usage = db.Column(db.Integer, default=0)
+    is_blocked = db.Column(db.Boolean, default=False, nullable=False)
 
     date_joined = db.Column(db.DateTime(timezone=True), default=utcnow)
 

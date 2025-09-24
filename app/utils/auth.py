@@ -50,6 +50,9 @@ def admin_only(f):
         user = get_current_user()
         if not user or not user.is_admin:
             return jsonify({"error": "Admin access required"}), 403
+        
+        if user.is_blocked:
+            return jsonify({"error": "Your account has been blocked. Contact support."}), 403
 
         return f(*args, **kwargs)
     return decorated
@@ -66,11 +69,19 @@ def require_api_key(f):
         for user in users:
             try:
                 if user.api_key == key:
+                    # Check if user is blocked
+                    if user.is_blocked:
+                        return jsonify({"error": "Your account has been blocked. "
+                                                 "Please contact support if this is a mistake."}), 403
+
+                    # Check if API key is approved
                     if not user.api_key_approved:
                         return jsonify({
                             "error": "Your API key is awaiting admin approval. "
                                      "You’ll receive an email with your API key once approved."
                         }), 403
+
+                    # Everything is fine, proceed to the route
                     return f(*args, **kwargs)
             except Exception:
                 continue
@@ -78,6 +89,7 @@ def require_api_key(f):
         return jsonify({"error": "Invalid API key"}), 403
 
     return decorated
+
 
 def log_request(func):
     @wraps(func)

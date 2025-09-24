@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from app.models import User
 from app.extensions import db
@@ -400,4 +400,102 @@ def delete_user(user_id):
         "success": True,
         "message": "User deleted successfully",
         "user_id": user_id
+    })
+
+# -------------------------
+# BLOCK / UNBLOCK USER
+# -------------------------
+@admin_bp.route("/block-user/<user_id>", methods=["POST"])
+@admin_only
+@log_request
+def block_user(user_id):
+    """
+    Block or unblock a user (admin-only).
+
+    Endpoint:
+    ---------
+    POST /api/v1/admin/block-user/<user_id>
+
+    Headers:
+    --------
+    - Authorization: Bearer <Admin user's personal API key>
+      OR
+    - X-STATIC-KEY: <Hermes static API key>
+
+    Description:
+    ------------
+    Admins can block or unblock a user account using this endpoint.
+    A blocked user will not be able to access any API endpoints that require
+    a personal API key. Passing "block": true will block the user, 
+    while "block": false will unblock them.
+
+    URL Parameters:
+    ---------------
+    - user_id: ID of the user to block/unblock.
+
+    Request JSON:
+    -------------
+    {
+        "block": true  # or false to unblock
+    }
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "User blocked successfully",
+        "user_id": "<user_id>",
+        "is_blocked": true
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 404
+    {
+        "error": "User not found"
+    }
+
+    Status Code: 403
+    {
+        "error": "Admin access required"
+    }
+
+    Example CURL:
+    -------------
+    # Block a user
+    curl -X POST http://localhost:5000/api/v1/admin/block-user/<user_id> \
+        -H "Authorization: Bearer <admin_api_key>" \
+        -H "Content-Type: application/json" \
+        -d '{"block": true}'
+
+    # Unblock a user
+    curl -X POST http://localhost:5000/api/v1/admin/block-user/<user_id> \
+        -H "Authorization: Bearer <admin_api_key>" \
+        -H "Content-Type: application/json" \
+        -d '{"block": false}'
+    """
+    logger.info(f"Admin attempting to block/unblock user {user_id}")
+    user = User.query.get(user_id)
+    if not user:
+        logger.warning(f"User not found for block/unblock: {user_id}")
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.json
+    block = data.get("block", True)  # default to block if not provided
+
+    try:
+        user.is_blocked = bool(block)
+        db.session.commit()
+        status_msg = "blocked" if user.is_blocked else "unblocked"
+        logger.info(f"User {user_id} successfully {status_msg}")
+    except Exception as e:
+        logger.error(f"Error updating block status for user {user_id}: {str(e)}")
+        return jsonify({"error": "Database error"}), 500
+
+    return jsonify({
+        "success": True,
+        "message": f"User {status_msg} successfully",
+        "user_id": user_id,
+        "is_blocked": user.is_blocked
     })

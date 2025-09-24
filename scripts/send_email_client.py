@@ -14,8 +14,8 @@ Purpose:
 Usage:
 - Import `send_email_via_hermes` in your project, or run this script directly for a demo.
 """
-import base64
 import os
+import base64
 import requests
 from typing import List, Optional, Dict, Any
 

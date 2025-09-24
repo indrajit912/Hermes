@@ -4,6 +4,7 @@
 <div class="row">
   <nav class="col-12 col-md-3 mb-4">
     <div class="list-group sticky-top">
+      <a href="#hermes-intro" class="list-group-item list-group-item-action">Introduction</a>
       <a href="#getting-started" class="list-group-item list-group-item-action">Getting Started</a>
       <a href="#user" class="list-group-item list-group-item-action">User APIs</a>
       <a href="#email" class="list-group-item list-group-item-action">Send Email API</a>
@@ -11,7 +12,40 @@
       <a href="#admin" class="list-group-item list-group-item-action">Admin APIs</a>
     </div>
   </nav>
+  
   <div class="col-12 col-md-9">
+
+  <!-- Introduction to Hermes -->
+<section id="hermes-intro" class="mb-5">
+  <h2 class="h4 text-primary mb-3">Introduction to Hermes</h2>
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <blockquote style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; color: #555; border-left: 4px solid #2c7be5; padding-left: 15px; margin: 0;">
+        <p>
+          Hermes is a developer-friendly email API designed to simplify automated email sending for your applications, websites, or services. 
+          Often, when building web apps, you need to send emails either to yourself or to your users—for example, contact form submissions, notifications, or system alerts. 
+          Setting up a reliable email server can be complex, and most free alternatives are limited or unreliable.
+        </p>
+        <p>
+          Take my personal website as an example: <a href="https://indrajitghosh.onrender.com/" target="_blank">indrajitghosh.onrender.com</a>. 
+          The <a href="https://indrajitghosh.onrender.com/contact/" target="_blank">Contact Me</a> form allows visitors to submit their queries along with their email addresses. 
+          When a user hits submit, Hermes automatically sends an email to me with all the details, without ever revealing my personal email to the visitor.
+        </p>
+        <p>
+          Similarly, many of my applications need to send automated emails to users on my behalf. Hermes handles all the email delivery logic under the hood, providing a simple and reliable public API that you can integrate directly into your codebase. 
+          You just make a free API call, and Hermes takes care of sending the email—no server setup or complex configuration required.
+        </p>
+        <p>
+          In short, Hermes solves the common problem of reliable email automation in a free, easy-to-use, and developer-friendly way.
+        </p>
+        <footer style="margin-top: 10px; font-style: italic; color: #888;">— Indrajit</footer>
+      </blockquote>
+    </div>
+  </div>
+</section>
+
+
+
       <!-- Getting Started: Making API Calls -->
       <section id="getting-started" class="mb-5">
         <h2 class="h4 text-primary mb-3">Getting Started: Making API Calls</h2>
@@ -52,6 +86,7 @@ print(resp.json())
           </div>
         </div>
       </section>
+
       <!-- User APIs -->
       <section id="user" class="mb-5">
         <h2 class="h4 text-success mb-3">User APIs</h2>

@@ -206,7 +206,7 @@ def send_email():
                 except Exception as e:
                     logger.warning(f"Failed to delete temp file {f}: {e}")
 
-        response_data = {"success": True, "message": "Email sent"}
+        response_data = {"success": True, "message": "Email successfully sent!"}
 
         # If Hermes default bot was used, include usage info
         if not bot_id:

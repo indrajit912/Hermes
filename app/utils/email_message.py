@@ -79,6 +79,7 @@ class EmailMessage(MIMEMultipart):
         self.plain_msg = email_plain_text
         self.html_msg = email_html_text
         self.attachments = attachments
+        self.stdout_print = stdout_print
 
         MIMEMultipart.__init__(self)
 
@@ -116,28 +117,28 @@ class EmailMessage(MIMEMultipart):
 
             #this part is used to tell how the file should be read and stored (r, or rb, etc.)
             if main_type == 'text':
-                if stdout_print:
+                if self.stdout_print:
                     print("text attached")
                 temp = open(attached_file, 'r')  # 'rb' will send this error: 'bytes' object has no attribute 'encode'
                 attachment = MIMEText(temp.read(), _subtype=sub_type)
                 temp.close()
 
             elif main_type == 'image':
-                if stdout_print:
+                if self.stdout_print:
                     print("image attached")
                 temp = open(attached_file, 'rb')
                 attachment = MIMEImage(temp.read(), _subtype=sub_type)
                 temp.close()
 
             elif main_type == 'audio':
-                if stdout_print:
+                if self.stdout_print:
                     print("audio attached")
                 temp = open(attached_file, 'rb')
                 attachment = MIMEAudio(temp.read(), _subtype=sub_type)
                 temp.close()            
 
             elif main_type == 'application' and sub_type == 'pdf': 
-                if stdout_print:
+                if self.stdout_print:
                     print("pdf attached")  
                 temp = open(attached_file, 'rb')
                 attachment = MIMEApplication(temp.read(), _subtype=sub_type)

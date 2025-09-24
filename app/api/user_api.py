@@ -152,6 +152,121 @@ def get_profile():
         }
     }), 200
 
+# -------------------------
+# ROTATE API KEY
+# -------------------------
+@user_bp.route("/apikey/rotate", methods=["POST"])
+@require_api_key
+@log_request
+def rotate_api_key():
+    """
+    Rotate the user's API key (invalidate old one, issue new).
+
+    Endpoint: POST /api/v1/apikey/rotate
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "API key rotated successfully",
+        "new_api_key": "<new_api_key>"
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    new_key = str(uuid.uuid4().hex)
+    user.api_key = new_key
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "API key rotated successfully",
+        "new_api_key": new_key
+    })
+
+
+# -------------------------
+# ADD EMAIL BOT
+# -------------------------
+@user_bp.route("/emailbot", methods=["POST"])
+@require_api_key
+@log_request
+def add_email_bot():
+    """
+    Add a new EmailBot for the authenticated user.
+
+    Endpoint: POST /api/v1/emailbot
+
+    Headers:
+    --------
+    - Authorization: Bearer <User personal API key>
+
+    Request JSON:
+    -------------
+    {
+        "username": "AliceBot",             # optional friendly name
+        "email": "alicebot@gmail.com",      # bot email
+        "password": "app-password",         # bot app password
+        "smtp_server": "smtp.gmail.com",    # optional, default "smtp.gmail.com"
+        "smtp_port": 587                     # optional, default 587
+    }
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "EmailBot added successfully",
+        "bot_id": "<newly_created_bot_id>"
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 400
+    {
+        "error": "Missing email or password"
+    }
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 400
+
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+    username = data.get("username")
+    smtp_server = data.get("smtp_server", "smtp.gmail.com")
+    smtp_port = data.get("smtp_port", 587)
+
+    if not email or not password:
+        return jsonify({"error": "Missing email or password"}), 400
+
+    bot = EmailBot(
+        user_id=user.id,
+        username=username,
+        smtp_server=smtp_server,
+        smtp_port=smtp_port
+    )
+    bot.email = email       # encrypted automatically
+    bot.password = password # encrypted automatically
+
+    db.session.add(bot)
+    db.session.commit()
+
+    logging.info(f"EmailBot added: {bot.id} for user: {user.id}")
+
+    return jsonify({
+        "success": True,
+        "message": "EmailBot added successfully",
+        "bot_id": bot.id
+    })
 
 # -------------------------
 # LIST EMAIL BOTS

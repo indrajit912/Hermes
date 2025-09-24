@@ -151,7 +151,8 @@ def send_email():
             cc=data.get("cc"),
             bcc=data.get("bcc"),
             attachments=attachments,
-            formataddr_text=data.get("from_name")
+            formataddr_text=data.get("from_name"),
+            stdout_print=False
         )
         msg.send(
             sender_email_password=sender_password,

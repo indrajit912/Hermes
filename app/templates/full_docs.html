@@ -8,7 +8,6 @@
       <a href="#user" class="list-group-item list-group-item-action">User APIs</a>
       <a href="#email" class="list-group-item list-group-item-action">Send Email API</a>
       <a href="#emailbot" class="list-group-item list-group-item-action">EmailBot APIs</a>
-      <a href="#emailapi" class="list-group-item list-group-item-action">Email APIs</a>
       <a href="#admin" class="list-group-item list-group-item-action">Admin APIs</a>
     </div>
   </nav>
@@ -36,7 +35,7 @@ data = {
     "to": ["recipient@example.com"],
     "subject": "Hello from Hermes",
     "email_plain_text": "Body text",
-    "email_html_text": "<p>Body HTML</p>"
+    "email_html_text": "&lt;p&gt;HTML body&lt;/p&gt;"
 }
 resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
@@ -62,8 +61,8 @@ print(resp.json())
             <p>Request a personal API key.</p>
             <span class="badge bg-primary">POST /api/v1/register</span>
             <pre class="bg-light p-2 rounded mt-2"><code>{
-  "name": "Alice Example",
-  "email": "alice@example.com"
+  <span class="text-danger">"name"</span>: <span class="text-success">"Alice Example"</span>,
+  <span class="text-danger">"email"</span>: <span class="text-success">"alice@example.com"</span>
 }</code></pre>
             <div class="accordion" id="registerAccordion">
               <div class="accordion-item">
@@ -177,20 +176,24 @@ print(resp.json())
         <div class="card mb-3 shadow-sm">
           <div class="card-body">
             <h5 class="card-title">Send Email</h5>
-            <p>Send an email using your API key or an EmailBot.<br>
+            <p>Send an email using your API key.<br>
   <span class="text-info">By default, emails are sent from the default Hermes bot email address. To use your own custom EmailBot, first add an EmailBot to your account, then pass its <code>bot_id</code> in this API call.</span>
 </p>
             <span class="badge bg-primary">POST /api/v1/send-email</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
 {
-  "to": ["recipient@example.com"],
-  "subject": "Hello from Hermes",
-  "email_plain_text": "Body text",
-  "email_html_text": "<p>Body HTML</p>",
-  "from_name": "Sender Name or Company Name",
-  "bot_id": "<optional: EmailBot ID>",
-  "cc": ["cc@example.com"],
-  "bcc": ["bcc@example.com"]
+  <span class="text-danger">"to"</span>: [<span class="text-success">"recipient@example.com"</span>],
+  <span class="text-danger">"subject"</span>: <span class="text-success">"Hello from Hermes"</span>,
+  <span class="text-danger">"email_plain_text"</span>: <span class="text-success">"Body text"</span>, <span class="text-muted">(optional)</span>
+  <span class="text-danger">"email_html_text"</span>: <span class="text-success">"&lt;p&gt;HTML body&lt;/p&gt;"</span>,
+  <span class="text-danger">"from_name"</span>: <span class="text-success">"Sender Name or Company Name"</span>, <span class="text-muted">(optional)</span>
+  <span class="text-danger">"bot_id"</span>: <span class="text-muted">"&lt;EmailBot ID&gt;"</span>, <span class="text-muted">(optional)</span>
+  <span class="text-danger">"cc"</span>: [<span class="text-success">"cc@example.com"</span>],
+  <span class="text-danger">"bcc"</span>: [<span class="text-success">"bcc@example.com"</span>],
+  <span class="text-danger">"attachments"</span>: [
+    {<span class="text-danger">"filename"</span>: <span class="text-success">"file.pdf"</span>, <span class="text-danger">"content"</span>: <span class="text-info">"base64-encoded-content"</span>},
+    {<span class="text-danger">"filename"</span>: <span class="text-success">"image.png"</span>, <span class="text-danger">"content"</span>: <span class="text-info">"base64-encoded-content"</span>}
+  ]
 }</code></pre>
             <div class="accordion" id="sendEmailAccordion">
               <div class="accordion-item">
@@ -209,7 +212,7 @@ data = {
     "from_name": "Sender Name or Company Name",
     "subject": "Hello from Hermes",
     "email_plain_text": "Body text",
-    "email_html_text": "<p>Body HTML</p>",
+    "email_html_text": "&lt;p&gt;HTML body&lt;/p&gt;",
 }
 resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
 print(resp.json())
@@ -231,11 +234,11 @@ print(resp.json())
             <span class="badge bg-warning text-dark">POST /api/v1/emailbot</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
 {
-  "username": "AliceBot",   # This is a display name for your reference
-  "email": "alicebot@gmail.com",    # This can be any email service (Gmail, Yahoo, Outlook, etc.)
-  "password": "app-password",     # This is the app password generated from your email provider
-  "smtp_server": "smtp.gmail.com", # SMTP server address of your email provider
-  "smtp_port": 587  # Typically 587 for TLS or 465 for SSL
+  <span class="text-danger">"username"</span>: <span class="text-success">"AliceBot"</span>,   <span class="text-muted"># This is a display name for your reference</span>
+  <span class="text-danger">"email"</span>: <span class="text-success">"alicebot@gmail.com"</span>,    <span class="text-muted"># This can be any email service (Gmail, Yahoo, Outlook, etc.)</span>
+  <span class="text-danger">"password"</span>: <span class="text-info">"app-password"</span>,     <span class="text-muted"># This is the app password generated from your email provider</span>
+  <span class="text-danger">"smtp_server"</span>: <span class="text-success">"smtp.gmail.com"</span>, <span class="text-muted"># SMTP server address of your email provider</span>
+  <span class="text-danger">"smtp_port"</span>: <span class="text-primary">587</span>  <span class="text-muted"># Typically 587 for TLS or 465 for SSL</span>
 }</code></pre>
             <div class="accordion" id="addBotAccordion">
               <div class="accordion-item">
@@ -298,11 +301,11 @@ print(resp.json())
             <span class="badge bg-warning text-dark">PUT /api/v1/emailbot/&lt;bot_id&gt;</span>
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
 {
-  "username": "UpdatedBotName",
-  "email": "updatedbot@gmail.com",
-  "password": "new-app-password",
-  "smtp_server": "smtp.outlook.com",
-  "smtp_port": 465
+  <span class="text-danger">"username"</span>: <span class="text-success">"UpdatedBotName"</span>,
+  <span class="text-danger">"email"</span>: <span class="text-success">"updatedbot@gmail.com"</span>,
+  <span class="text-danger">"password"</span>: <span class="text-info">"new-app-password"</span>,
+  <span class="text-danger">"smtp_server"</span>: <span class="text-success">"smtp.outlook.com"</span>,
+  <span class="text-danger">"smtp_port"</span>: <span class="text-primary">465</span>
 }</code></pre>
             <div class="accordion" id="updateBotAccordion">
               <div class="accordion-item">
@@ -360,59 +363,7 @@ print(resp.json())
           </div>
         </div>
       </section>
-      <!-- Email APIs -->
-      <section id="emailapi" class="mb-5">
-        <h2 class="h4 text-info mb-3">Email APIs</h2>
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">Send Email</h5>
-            <p>Send an email using a specified EmailBot or the default Hermes bot.</p>
-            <span class="badge bg-info">POST /api/v1/send-email</span>
-            <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;
-{
-  "bot_id": "<optional: EmailBot ID>",
-  "from_name": "Indrajit's Bot",
-  "to": ["recipient1@example.com"],
-  "subject": "Email Subject",
-  "email_plain_text": "Plain text body",
-  "email_html_text": "&lt;p&gt;HTML body&lt;/p&gt;",
-  "cc": ["cc@example.com"],
-  "bcc": ["bcc@example.com"],
-  "attachments": ["path/to/file.pdf"]
-}</code></pre>
-            <div class="accordion" id="sendEmailApiAccordion">
-              <div class="accordion-item">
-                <h2 class="accordion-header" id="sendEmailApiPython">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sendEmailApiPythonCode" aria-expanded="false" aria-controls="sendEmailApiPythonCode">
-                    Example Python (requests)
-                  </button>
-                </h2>
-                <div id="sendEmailApiPythonCode" class="accordion-collapse collapse" aria-labelledby="sendEmailApiPython" data-bs-parent="#sendEmailApiAccordion">
-                  <div class="accordion-body">
-                    <pre class="bg-light p-2 rounded"><code>import requests
-
-headers = {"Authorization": "Bearer YOUR_API_KEY"}
-data = {
-    "bot_id": "BOT_ID",
-    "from_name": "Indrajit's Bot",
-    "to": ["recipient1@example.com"],
-    "subject": "Email Subject",
-    "email_plain_text": "Plain text body",
-    "email_html_text": "<p>HTML body</p>",
-    "cc": ["cc@example.com"],
-    "bcc": ["bcc@example.com"],
-    "attachments": ["path/to/file.pdf"]
-}
-resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/send-email", headers=headers, json=data)
-print(resp.json())
-</code></pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
       <!-- Admin APIs -->
       <section id="admin" class="mb-5">
         <h2 class="h4 text-danger mb-3">Admin APIs</h2>

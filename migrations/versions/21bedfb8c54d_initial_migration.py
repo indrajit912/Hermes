@@ -1,8 +1,8 @@
-"""Initial Migration
+"""Initial migration
 
-Revision ID: 9d26d188de6b
+Revision ID: 21bedfb8c54d
 Revises: 
-Create Date: 2025-09-24 13:55:36.266538
+Create Date: 2025-09-24 17:19:12.961719
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9d26d188de6b'
+revision = '21bedfb8c54d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,6 +27,7 @@ def upgrade():
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('api_key_approved', sa.Boolean(), nullable=True),
     sa.Column('hermes_default_usage', sa.Integer(), nullable=True),
+    sa.Column('is_blocked', sa.Boolean(), nullable=False),
     sa.Column('date_joined', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('api_key_encrypted'),

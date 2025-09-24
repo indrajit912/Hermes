@@ -153,11 +153,24 @@ def send_email():
     for att in raw_attachments:
         if isinstance(att, dict) and "filename" in att and "content" in att:
             try:
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='_' + att["filename"])
-                temp_file.write(base64.b64decode(att["content"]))
-                temp_file.close()
-                attachments.append(temp_file.name)
-                logger.debug(f"Attachment saved to temp file {temp_file.name}")
+                # Create a temporary directory (unique for this run)
+                temp_dir = tempfile.gettempdir()
+                file_path = os.path.join(temp_dir, att["filename"])
+    
+                # If you want to avoid overwriting existing files
+                counter = 1
+                original_file_path = file_path
+                while os.path.exists(file_path):
+                    file_path = os.path.join(temp_dir, f"{counter}_{att['filename']}")
+                    counter += 1
+    
+                # Write the file
+                with open(file_path, "wb") as f:
+                    f.write(base64.b64decode(att["content"]))
+    
+                attachments.append(file_path)
+                logger.debug(f"Attachment saved to temp file {file_path}")
+    
             except Exception as e:
                 logger.error(f"Failed to decode attachment {att.get('filename')}: {str(e)}")
         else:

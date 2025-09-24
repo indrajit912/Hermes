@@ -104,6 +104,90 @@ def register():
         }
     }), 201
 
+@user_bp.route("/apikey/recover", methods=["POST"])
+def recover_api_key():
+    """
+    Recover or regenerate your personal API key.
+
+    Endpoint: POST /api/v1/apikey/recover
+
+    Description:
+    ------------
+    This endpoint allows a registered user to regenerate their personal API key
+    in case it is lost or compromised. The new API key will be emailed to
+    the registered email address and stored in the database.
+
+    Request JSON:
+    -------------
+    {
+        "email": "<User's registered email address>"
+    }
+
+    Response (Success):
+    -------------------
+    Status Code: 200
+    {
+        "success": True,
+        "message": "A new API key has been generated and emailed to your address."
+    }
+
+    Response (Errors):
+    ------------------
+    Status Code: 400
+    {
+        "error": "Email is required"
+    }
+    OR
+    {
+        "error": "User not found"
+    }
+    """
+    data = request.json
+    email = data.get("email")
+    logger.info(f"Recover API key called for email: {email}")
+
+    if not email:
+        logger.warning("Recover API key failed: email not provided")
+        return jsonify({"error": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        logger.warning(f"Recover API key failed: no user found with email {email}")
+        return jsonify({"error": "User not found"}), 400
+
+    # Generate new API key
+    new_api_key = str(uuid.uuid4().hex)
+    user.api_key = new_api_key
+    db.session.commit()
+    logger.info(f"New API key generated for user_id={user.id}, email={email}")
+
+    # Send email to user with the new API key
+    subject = "Hermes - Your New API Key"
+    context = {
+        "name": user.name,
+        "email": user.email,
+        "api_key": new_api_key,
+        "hermes_homepage": Config.HERMES_HOMEPAGE
+    }
+    try:
+        send_email(
+            to=[user.email],
+            subject=subject,
+            html_template="api_key_recovery.html",
+            template_context=context,
+            from_name="Hermes Bot"
+        )
+        logger.info(f"API key email sent to {email}")
+    except Exception as e:
+        logger.error(f"Failed to send API key email to {email}: {str(e)}")
+        return jsonify({"error": "Failed to send API key email"}), 500
+
+    return jsonify({
+        "success": True,
+        "message": "A new API key has been generated and emailed to your address."
+    }), 200
+
+
 # -------------------------
 # GET CURRENT USER PROFILE
 # -------------------------

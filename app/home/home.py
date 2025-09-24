@@ -18,5 +18,6 @@ def full_docs():
         year=datetime.now().year, 
         hermes_default_bot_limit=Config.HERMES_DEFAULT_BOT_LIMIT,
         email_client_code=email_client_code,
-        hermes_github_repo=Config.HERMES_GITHUB_REPO
+        hermes_github_repo=Config.HERMES_GITHUB_REPO,
+        hermes_homepage=Config.HERMES_HOMEPAGE
     )

@@ -1,0 +1,34 @@
+{% extends "email_base.html" %}
+
+{% block content %}
+  <h2 style="color:#2c7be5; font-size:20px; margin-bottom:12px;">🔑 API Key Recovery</h2>
+
+  <p>Hello {{ name }},</p>
+
+  <p>
+    You requested a <strong>new personal API key</strong> for your Hermes account 
+    ({{ email }}).
+  </p>
+
+  <p style="margin-top:16px;">
+    Here is your newly generated API key:
+  </p>
+
+  <div style="font-family: monospace; background-color: #f9fafb; padding: 12px 16px;
+              border-radius: 6px; display: inline-block; font-size: 1.1em; margin: 18px 0;
+              border: 1px solid #e5e7eb; color:#111827;">
+    {{ api_key }}
+  </div>
+
+  <p style="margin: 12px 0;">
+    ⚠️ <strong>Please keep this key safe and secure.</strong> 
+    Do not share it with anyone.
+  </p>
+
+  <p>
+    If you <em>did not</em> request a new API key, please contact 
+    <a href="{{ hermes_homepage }}" style="color:#2c7be5; text-decoration:none;" target="_blank">
+      Hermes support
+    </a> immediately.
+  </p>
+{% endblock %}

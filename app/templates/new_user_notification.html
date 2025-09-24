@@ -1,22 +1,28 @@
 {% extends "email_base.html" %}
 
 {% block content %}
-<h2>New User Registration Alert 🚨</h2>
-<p>Hello Admins,</p>
+  <h2 style="color:#dc2626; font-size:20px; margin-bottom:12px;">🚨 New User Registration Alert</h2>
 
-<p>A new user has registered in the Hermes system and is awaiting approval:</p>
+  <p>Hello Admins,</p>
 
-<ul>
+  <p>
+    A new user has registered in the Hermes system and is <strong>awaiting approval</strong>:
+  </p>
+
+  <ul style="line-height:1.6; color:#374151;">
     <li><strong>Name:</strong> {{ name }}</li>
     <li><strong>Email:</strong> {{ email }}</li>
     <li><strong>User ID:</strong> {{ user_id }}</li>
-</ul>
+  </ul>
 
-<p>You can approve this user using the following endpoint:</p>
-<pre><code>POST /api/v1/admin/approve-user/{{ user_id }}</code></pre>
+  <p style="margin-top:20px;">
+    You can approve this user with the following API call:
+  </p>
+  <pre>POST /api/v1/admin/approve-user/{{ user_id }}</pre>
 
-<p>Remember to include your admin API key in the <code>Authorization</code> header:</p>
-<pre><code>Authorization: Bearer &lt;YOUR_ADMIN_API_KEY&gt;</code></pre>
+  <p>
+    Be sure to include your <code>Authorization</code> header with your admin API key:
+  </p>
+  <pre>Authorization: Bearer &lt;YOUR_ADMIN_API_KEY&gt;</pre>
 
-<p>Thank you,<br>Hermes Bot 🤖</p>
 {% endblock %}

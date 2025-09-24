@@ -87,11 +87,54 @@ print(resp.json())
             </div>
           </div>
         </div>
+
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Recover API Key</h5>
+            <p>
+              Request a new personal API key if you lost yours.  
+              The new key will be generated, stored in the database, and emailed to your registered email address.  
+              Your old key will be invalidated immediately.
+            </p>
+            <span class="badge bg-primary">POST /api/v1/apikey/recover</span>
+            <pre class="bg-light p-2 rounded mt-2"><code>Request JSON:
+{
+  <span class="text-danger">"email"</span>: <span class="text-success">"your_registered_email@example.com"</span>
+}</code></pre>
+            <div class="accordion" id="recoverAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="recoverPython">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#recoverPythonCode" aria-expanded="false" aria-controls="recoverPythonCode">
+                    Example Python (requests)
+                  </button>
+                </h2>
+                <div id="recoverPythonCode" class="accordion-collapse collapse" aria-labelledby="recoverPython" data-bs-parent="#recoverAccordion">
+                  <div class="accordion-body">
+                    <pre class="bg-light p-2 rounded"><code>import requests
+                    
+data = {"email": "your_registered_email@example.com"}
+resp = requests.post("https://hermesbot.pythonanywhere.com/api/v1/apikey/recover", json=data)
+print(resp.json())
+</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+
         <div class="card mb-3 shadow-sm">
           <div class="card-body">
             <h5 class="card-title">Rotate API Key</h5>
-            <p>Rotate your personal API key.</p>
+            <p>
+              Rotate your personal API key when you suspect it may have been compromised 
+              or simply as a security best practice.  
+              This will immediately invalidate your existing API key and issue a new one, 
+              ensuring continued access without risking unauthorized use.
+            </p>
             <span class="badge bg-primary">POST /api/v1/apikey/rotate</span>
+            
             <pre class="bg-light p-2 rounded mt-2"><code>Headers: Authorization: Bearer &lt;API_KEY&gt;</code></pre>
             <div class="accordion" id="rotateAccordion">
               <div class="accordion-item">

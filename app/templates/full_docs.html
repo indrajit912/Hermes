@@ -279,6 +279,53 @@ print(resp.json())
   ]
 }</code></pre>
 
+      <!-- Responses -->
+      <div class="mt-4">
+        <h6 class="text-secondary">Responses</h6>
+
+        <p><span class="badge bg-success">200 OK</span> – Email sent successfully</p>
+        <pre class="bg-light p-2 rounded"><code>{
+  <span class="text-danger">"success"</span>: true,
+  <span class="text-danger">"message"</span>: <span class="text-success">"Email sent successfully!"</span>,
+  <span class="text-danger">"hermes_default_usage"</span>: {
+    <span class="text-danger">"used"</span>: 2,
+    <span class="text-danger">"remaining"</span>: 3,
+    <span class="text-danger">"limit"</span>: 5,
+    <span class="text-danger">"docs"</span>: <span class="text-success">{{ hermes_homepage }}/docs</span>
+  }
+}</code></pre>
+
+        <p><span class="badge bg-danger">400 Bad Request</span> – Invalid request or email format</p>
+        <pre class="bg-light p-2 rounded"><code>{
+  <span class="text-danger">"success"</span>: false,
+  <span class="text-danger">"error"</span>: <span class="text-success">"Invalid email format: test@invalid"</span>
+}</code></pre>
+        <pre class="bg-light p-2 rounded"><code>{
+  <span class="text-danger">"success"</span>: false,
+  <span class="text-danger">"error"</span>: <span class="text-success">"Invalid bot ID or bot does not belong to user"</span>
+}</code></pre>
+
+        <p><span class="badge bg-warning text-dark">403 Forbidden</span> – Hermes bot usage exceeded</p>
+<p class="text-muted">
+  This happens when the user calls this endpoint without an <code>bot_id</code>.  
+  Without this attribute, the email will be sent through the Default Hermes Bot, which has an upper limit of 
+  <code>{{ hermes_default_bot_limit }}</code>.  
+  If you call this endpoint more than this number of times, the API will raise this error.  
+  From the next time onwards, you should create and use your own <strong>EmailBot</strong> (see next section) to continue sending emails.
+</p>
+<pre class="bg-light p-2 rounded"><code>{
+  <span class="text-danger">"error"</span>: <span class="text-success">"Default Hermes bot usage limit exceeded. Please create your own EmailBot."</span>,
+  <span class="text-danger">"docs"</span>: <span class="text-success">{{ hermes_homepage }}/docs</span>
+}</code></pre>
+
+
+        <p><span class="badge bg-dark">500 Internal Server Error</span> – Something went wrong on the server</p>
+        <pre class="bg-light p-2 rounded"><code>{
+  <span class="text-danger">"success"</span>: false,
+  <span class="text-danger">"error"</span>: <span class="text-success">"Unexpected error while sending email."</span>
+}</code></pre>
+      </div>
+
       <div class="accordion" id="sendEmailAccordion">
         <div class="accordion-item">
           <h2 class="accordion-header" id="sendEmailPython">
@@ -339,6 +386,7 @@ print(resp.json())
     </div>
   </div>
 </section>
+
 
       <!-- EmailBot APIs -->
       <section id="emailbot" class="mb-5">

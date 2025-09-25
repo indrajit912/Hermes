@@ -8,6 +8,7 @@ from app.models import EmailBot
 from app.extensions import db
 from config import Config
 from app.utils.email_message import EmailMessage
+from scripts.utils import is_valid_email_address
 from app.utils.auth import get_current_user, require_api_key, log_request
 
 logger = logging.getLogger(__name__)
@@ -19,48 +20,90 @@ email_bp = Blueprint("email_api", __name__, url_prefix="/api/v1")
 @log_request
 def send_email():
     """
-    Send an email using a specified or default bot.
+    Send an email using either a user-owned EmailBot or the default Hermes bot.
 
-    Endpoint: POST /api/v1/send-email
+    Endpoint:
+    ---------
+    POST /api/v1/send-email
 
-    Headers:
-    --------
-    - Authorization: Bearer <Admin user's personal API key>
+    Authentication:
+    ---------------
+    - Requires an API key in the Authorization header.
+      Example: Authorization: Bearer <API_KEY>
 
-    Expects JSON with:
-      - to: recipient email address (required)
-      - subject: email subject (optional)
-      - email_plain_text: plain text body (optional)
-      - email_html_text: HTML body (optional)
-      - cc: list of CC addresses (optional)
-      - bcc: list of BCC addresses (optional)
-      - from_name: sender name (optional)
-      - bot_id: use a specific EmailBot (optional)
-      - attachments: 
-          - list of dicts with {"filename": ..., "content": ...} (base64-encoded)
-          - or list of file paths (strings)
-          - or a single file path (string)
-        If a list of file paths is provided, will attempt to convert each to {"filename", "content"} if possible.
+    Request Body (JSON):
+    --------------------
+    {
+        "to": "recipient@example.com",            # required, recipient email
+        "subject": "Test Email",                  # optional, subject line
+        "email_plain_text": "Hello world!",       # optional, plain text body
+        "email_html_text": "<p>Hello world!</p>", # optional, HTML body
+        "cc": ["cc1@example.com"],                # optional, list of CC recipients
+        "bcc": ["bcc1@example.com"],              # optional, list of BCC recipients
+        "from_name": "Hermes Bot",                # optional, display name for sender
+        "bot_id": 123,                            # optional, use a specific EmailBot
+        "attachments": [                          # optional, attachments
+            {
+                "filename": "hello.txt",
+                "content": "SGVsbG8gd29ybGQh"     # base64 for "Hello world!"
+            }
+        ]
+        # also accepts:
+        # - list of file paths ["./path/to/file1.txt", "./path/to/file2.pdf"]
+        # - single file path string "./path/to/file.txt"
+    }
 
-    Returns:
-    --------
-    On success:
-        {
-            "success": true,
-            "message": "Email sent"
+    Validation:
+    -----------
+    - "to" address is validated for:
+        * correct email format (RFC-compliant)
+    - Invalid or malformed addresses return HTTP 400.
+
+    Responses:
+    ----------
+    200 OK
+    {
+        "success": true,
+        "message": "Email sent successfully!",
+        "hermes_default_usage": {     # only if default Hermes bot is used
+            "used": 2,
+            "remaining": 3,
+            "limit": 5,
+            "docs": "https://<your-domain>/docs"
         }
-    On error:
-        {
-            "success": false,
-            "error": "<error message>"
-        }
-        or
-        {
-            "error": "<error message>"
-        }
+    }
 
-    Example call (using curl):
-    --------------------------
+    400 Bad Request
+    {
+        "success": false,
+        "error": "Invalid email format: ..."
+    }
+    or
+    {
+        "success": false,
+        "error": "Invalid bot ID or bot does not belong to user"
+    }
+    or
+    {
+        "success": false,
+        "error": "User not found"
+    }
+
+    403 Forbidden
+    {
+        "success": false,
+        "error": "Default Hermes bot usage limit exceeded. Please create your own EmailBot.",
+        "docs": "https://<your-domain>/docs"
+    }
+
+    500 Internal Server Error
+    {
+        "success": false,
+        "error": "<detailed error message>"
+    }
+
+    Example (cURL):
+    ---------------
     curl -X POST https://<your-domain>/api/v1/send-email \\
       -H "Authorization: Bearer <API_KEY>" \\
       -H "Content-Type: application/json" \\
@@ -74,7 +117,7 @@ def send_email():
             "attachments": [
                 {
                     "filename": "hello.txt",
-                    "content": "SGVsbG8gd29ybGQh"  // base64 for "Hello world!"
+                    "content": "SGVsbG8gd29ybGQh"
                 }
             ]
           }'
@@ -83,9 +126,17 @@ def send_email():
     user = get_current_user()
     if not user:
         logger.warning("Send-email failed: User not found")
-        return jsonify({"error": "User not found"}), 400
+        return jsonify({"success": False, "error": "User not found"}), 400
 
     logger.info(f"Send-email request started by user_id={user.id}")
+
+    # ----------------------
+    # Validate recipient email
+    # ----------------------
+    ok, error = is_valid_email_address(data["to"])
+    if not ok:
+        logger.warning(f"Invalid recipient email {data['to']}: {error}")
+        return jsonify({"success": False, "error": error}), 400
 
     bot_id = data.get("bot_id")
     if bot_id:
@@ -93,7 +144,7 @@ def send_email():
         bot = EmailBot.query.filter_by(id=bot_id, user_id=user.id).first()
         if not bot:
             logger.warning(f"Send-email failed: Invalid bot_id={bot_id} for user_id={user.id}")
-            return jsonify({"error": "Invalid bot ID or bot does not belong to user"}), 400
+            return jsonify({"success": False, "error": "Invalid bot ID or bot does not belong to user"}), 400
 
         sender_email = bot.email
         sender_password = bot.password
@@ -108,6 +159,7 @@ def send_email():
                 f"(limit={Config.HERMES_DEFAULT_BOT_LIMIT})"
             )
             return jsonify({
+                "success": False,
                 "error": "Default Hermes bot usage limit exceeded. "
                          "Please create your own EmailBot.",
                 "docs": f"{Config.HERMES_HOMEPAGE}/docs"
@@ -206,7 +258,7 @@ def send_email():
                 except Exception as e:
                     logger.warning(f"Failed to delete temp file {f}: {e}")
 
-        response_data = {"success": True, "message": "Email successfully sent!"}
+        response_data = {"success": True, "message": "Email sent successfully!"}
 
         # If Hermes default bot was used, include usage info
         if not bot_id:

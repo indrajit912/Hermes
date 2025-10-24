@@ -130,14 +130,6 @@ def send_email():
 
     logger.info(f"Send-email request started by user_id={user.id}")
 
-    # ----------------------
-    # Validate recipient email
-    # ----------------------
-    ok, error = is_valid_email_address(data["to"])
-    if not ok:
-        logger.warning(f"Invalid recipient email {data['to']}: {error}")
-        return jsonify({"success": False, "error": error}), 400
-
     bot_id = data.get("bot_id")
     if bot_id:
         # --- using user’s own bot ---

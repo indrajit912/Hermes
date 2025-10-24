@@ -8,7 +8,6 @@ from app.models import EmailBot
 from app.extensions import db
 from config import Config
 from app.utils.email_message import EmailMessage
-from scripts.utils import is_valid_email_address
 from app.utils.auth import get_current_user, require_api_key, log_request
 
 logger = logging.getLogger(__name__)
